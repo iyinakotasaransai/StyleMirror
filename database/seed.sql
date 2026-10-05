@@ -45,7 +45,9 @@ INSERT IGNORE INTO `products` (`id`, `seller_id`, `category_id`, `name`, `descri
 (7, 1, 2, 'Floral Silk Wrap Midi Dress', 'Pure mulberry silk dress adorned with botanical watercolor illustrations, adjustable waist tie, and flutter sleeves.', 'FLEUR & MODE', 124.99, 1, NOW(), NOW()),
 (8, 1, 3, 'Vintage Washed Denim Trucker Jacket', '14 oz selvedge denim jacket finished with subtle distressed abrasions, copper shank buttons, and dual chest pockets.', 'RETROGRADE', 99.99, 1, NOW(), NOW()),
 (9, 1, 4, 'Monochrome Executive Formal Shirt', 'Wrinkle-resistant pinpoint oxford dress shirt designed for sharp executive styling and all-day comfort.', 'MIRROR ATELIER', 74.99, 1, NOW(), NOW()),
-(10, 1, 5, 'Acid Wash Acid-Black Boxy Tee', 'Heavy boxy fit streetwear t-shirt with custom acid-wash patina and ribbed crewneck collar.', 'STREETPULSE', 45.99, 1, NOW(), NOW());
+(10, 1, 5, 'Acid Wash Acid-Black Boxy Tee', 'Heavy boxy fit streetwear t-shirt with custom acid-wash patina and ribbed crewneck collar.', 'STREETPULSE', 45.99, 1, NOW(), NOW()),
+(11, 1, 2, 'Emerald Royal Satin Gala Dress', 'Exquisite bias-cut emerald satin gala gown featuring a cascading cowl neckline and sleek tailored floor-length drape.', 'LUMIÈRE PARIS', 289.99, 1, NOW(), NOW()),
+(12, 1, 4, 'Black-Tie Royal Tuxedo Suit', 'Classic black-tie wool tuxedo crafted with satin shawl lapels, single-button stance, and bespoke satin-trimmed finishes.', 'SARTORIA MILANO', 349.99, 1, NOW(), NOW());
 
 INSERT IGNORE INTO `product_variants` (`id`, `product_id`, `size`, `color`, `price`, `stock`, `sku`, `active`) VALUES
 (1, 1, 'M', 'Onyx Black', 149.99, 45, 'JKT-CYBER-BLK-M', 1),
@@ -75,7 +77,13 @@ INSERT IGNORE INTO `product_variants` (`id`, `product_id`, `size`, `color`, `pri
 (25, 9, 'M', 'French Blue', 74.99, 40, 'SHT-EXEC-BLU-M', 1),
 (26, 9, 'L', 'French Blue', 74.99, 35, 'SHT-EXEC-BLU-L', 1),
 (27, 10, 'M', 'Vintage Washed Black', 45.99, 50, 'TEE-ACD-BLK-M', 1),
-(28, 10, 'L', 'Vintage Washed Black', 45.99, 45, 'TEE-ACD-BLK-L', 1);
+(28, 10, 'L', 'Vintage Washed Black', 45.99, 45, 'TEE-ACD-BLK-L', 1),
+(29, 11, 'S', 'Emerald Green', 289.99, 20, 'DRS-EMR-SAT-S', 1),
+(30, 11, 'M', 'Emerald Green', 289.99, 25, 'DRS-EMR-SAT-M', 1),
+(31, 11, 'L', 'Emerald Green', 289.99, 15, 'DRS-EMR-SAT-L', 1),
+(32, 12, '38R', 'Midnight Black', 349.99, 18, 'TUX-RYL-BLK-38', 1),
+(33, 12, '40R', 'Midnight Black', 349.99, 24, 'TUX-RYL-BLK-40', 1),
+(34, 12, '42R', 'Midnight Black', 349.99, 14, 'TUX-RYL-BLK-42', 1);
 
 INSERT IGNORE INTO `product_images` (`id`, `product_id`, `image_url`, `alt_text`, `sort_order`) VALUES
 (1, 1, '/assets/products/bomber_jacket.svg', 'Cyberpunk Techwear Bomber Jacket front view', 1),
@@ -87,7 +95,9 @@ INSERT IGNORE INTO `product_images` (`id`, `product_id`, `image_url`, `alt_text`
 (7, 7, '/assets/products/silk_dress.svg', 'Floral Silk Wrap Midi Dress front view', 1),
 (8, 8, '/assets/products/denim_jacket.svg', 'Vintage Washed Denim Trucker Jacket front view', 1),
 (9, 9, '/assets/products/executive_shirt.svg', 'Monochrome Executive Formal Shirt front view', 1),
-(10, 10, '/assets/products/acid_tee.svg', 'Acid Wash Acid-Black Boxy Tee front view', 1);
+(10, 10, '/assets/products/acid_tee.svg', 'Acid Wash Acid-Black Boxy Tee front view', 1),
+(11, 11, '/assets/overlays/emerald_gown.png', 'Emerald Royal Satin Gala Dress front view', 1),
+(12, 12, '/assets/overlays/tuxedo_suit.png', 'Black-Tie Royal Tuxedo Suit front view', 1);
 
 INSERT IGNORE INTO `tryon_assets` (`id`, `product_id`, `overlay_image_path`, `glb_path`, `enabled`, `created_at`, `updated_at`) VALUES
 (1, 1, '/assets/overlays/bomber_jacket.png', '/models/jacket.glb', 1, NOW(), NOW()),
@@ -99,4 +109,6 @@ INSERT IGNORE INTO `tryon_assets` (`id`, `product_id`, `overlay_image_path`, `gl
 (7, 7, '/assets/overlays/silk_dress.png', '/models/dress.glb', 1, NOW(), NOW()),
 (8, 8, '/assets/overlays/denim_jacket.png', '/models/jacket.glb', 1, NOW(), NOW()),
 (9, 9, '/assets/overlays/executive_shirt.png', '/models/shirt.glb', 1, NOW(), NOW()),
-(10, 10, '/assets/overlays/acid_tee.png', '/models/shirt.glb', 1, NOW(), NOW());
+(10, 10, '/assets/overlays/acid_tee.png', '/models/shirt.glb', 1, NOW(), NOW()),
+(11, 11, '/assets/overlays/emerald_gown.png', '/models/dress.glb', 1, NOW(), NOW()),
+(12, 12, '/assets/overlays/tuxedo_suit.png', '/models/blazer.glb', 1, NOW(), NOW());

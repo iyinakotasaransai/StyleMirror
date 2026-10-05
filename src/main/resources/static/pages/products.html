@@ -17,12 +17,20 @@
 
   <main class="main-content">
     <div class="container">
-      <div style="margin-bottom: 32px;">
-        <span class="product-brand">HAUTE COUTURE CATALOG</span>
-        <h1 class="display-title" style="font-size: 2.4rem;">DIGITAL <span class="gold-text">ATELIER COLLECTION</span></h1>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">
-          Explore precision-crafted garments enabled with real-time MediaPipe virtual try-on overlays.
-        </p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <span class="product-brand">HAUTE COUTURE CATALOG</span>
+          <h1 class="display-title" style="font-size: 2.4rem;">DIGITAL <span class="gold-text">ATELIER COLLECTION</span></h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Explore precision-crafted garments enabled with real-time MediaPipe virtual try-on overlays.
+          </p>
+        </div>
+        <!-- Seller / Admin ONLY Add New Dress Button (Strictly hidden for Buyers) -->
+        <div id="seller-admin-banner" style="display: none;">
+          <a href="/pages/seller/product-form.html" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37, #aa8214); color: #000; font-weight: 700; border: none; box-shadow: 0 4px 15px rgba(212,175,55,0.3);">
+            + Add New Dress (Seller / Admin)
+          </a>
+        </div>
       </div>
 
       <div class="catalog-layout">
@@ -77,6 +85,7 @@
 
   <script type="module">
     import { products } from "/js/products.js";
+    import { auth } from "/js/auth.js";
     import { utils } from "/js/utils.js";
     import "/js/app.js";
 
@@ -85,6 +94,14 @@
     let currentSearch = "";
 
     async function initCatalog() {
+      // Show "+ Add New Dress" banner strictly for Sellers and Admins
+      const isSeller = auth.hasRole("SELLER");
+      const isAdmin = auth.hasRole("ADMIN");
+      const sellerBanner = document.getElementById("seller-admin-banner");
+      if (sellerBanner && (isSeller || isAdmin)) {
+        sellerBanner.style.display = "block";
+      }
+
       await loadCategories();
       await fetchAndRenderProducts();
       setupEvents();

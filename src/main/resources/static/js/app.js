@@ -32,10 +32,12 @@ export function initNavShell() {
 
             ${isSeller ? `
               <a href="/pages/seller/dashboard.html" class="nav-link">Seller Studio</a>
+              <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #d4af37, #aa8214); color: #000; font-weight: 700; border: none; padding: 5px 12px; margin-left: 6px;">+ Add Dress</a>
             ` : ""}
 
             ${isAdmin ? `
               <a href="/pages/admin/dashboard.html" class="nav-link">Admin Portal</a>
+              <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #d4af37, #aa8214); color: #000; font-weight: 700; border: none; padding: 5px 12px; margin-left: 6px;">+ Add Dress</a>
             ` : ""}
           </nav>
 

@@ -1,8 +1,8 @@
 /**
- * StyleMirror - MediaPipe Live Virtual Try-On Pipeline
- * Tracks body landmarks (shoulders, hips, torso), smooths movements,
- * calculates garment scale/rotation, renders overlay, detects stable frame,
- * and triggers AI styling. Includes photo-upload fallback.
+ * StyleMirror - Photorealistic Virtual Try-On Pipeline
+ * Anatomical body landmark tracking with MediaPipe Pose, tailored garment fitting
+ * for Men and Women dresses/suits, real-time user fit adjustments,
+ * dynamic garment swapping, and photo-fitting support.
  */
 
 import { api } from "./api.js";
@@ -19,16 +19,22 @@ export class VirtualTryOnStudio {
 
     this.garmentImage = new Image();
     this.garmentLoaded = false;
+    this.currentGarmentCategory = "Default";
     this.pose = null;
-    this.camera = null;
 
     // Landmark Smoothing (Exponential Moving Average)
     this.smoothedTorso = { x: 0, y: 0, width: 0, height: 0, angle: 0 };
-    this.smoothingAlpha = 0.35; // 0 = rigid past, 1 = raw instant
+    this.smoothingAlpha = 0.30; // Smooth natural interpolation
+
+    // Interactive Fit Controls (Adjustable in Real Time)
+    this.userScale = 1.0;       // Scale: 0.8x to 1.3x
+    this.userOffsetY = 0;       // Vertical alignment: -80px to +80px
+    this.userSpan = 1.0;        // Shoulder span: 0.8x to 1.3x
+    this.userOpacity = 0.95;    // Fabric blend: 0.7 to 1.0
 
     // Stable Frame Detection
     this.stableFramesCount = 0;
-    this.stableThreshold = 20; // Number of consecutive stable frames required
+    this.stableThreshold = 18;
     this.tryonReadyTriggered = false;
     this.lastCenter = { x: 0, y: 0 };
 
@@ -37,34 +43,65 @@ export class VirtualTryOnStudio {
       color: "Default",
     };
 
+    this.isPhotoMode = false;
+    this.uploadedPhoto = null;
+
     this.init();
   }
 
   async init() {
-    await this.loadGarmentAsset();
+    await this.loadGarmentAsset(this.productId);
     this.initMediaPipePose();
     this.startWebcam();
   }
 
-  async loadGarmentAsset() {
+  async loadGarmentAsset(prodId) {
+    this.garmentLoaded = false;
     try {
-      const res = await api.get(`/tryon/product/${this.productId}/asset`);
+      const res = await api.get(`/tryon/product/${prodId}/asset`);
       if (res.success && res.data && res.data.overlayImagePath) {
         this.garmentImage.crossOrigin = "anonymous";
         this.garmentImage.src = res.data.overlayImagePath;
         this.garmentImage.onload = () => {
           this.garmentLoaded = true;
-          console.log("Try-on garment overlay loaded successfully.");
+          console.log("Try-on garment overlay loaded:", res.data.overlayImagePath);
         };
       } else {
-        this.showNotice("This garment does not have an active try-on overlay asset.");
+        this.fallbackGarment();
       }
     } catch (err) {
-      console.warn("Try-on asset error:", err.message);
-      this.showNotice("Try-on asset unavailable. Demonstrating with default silhouette.");
-      // Fallback default overlay
-      this.garmentImage.src = "/assets/overlays/bomber_jacket.png";
-      this.garmentImage.onload = () => { this.garmentLoaded = true; };
+      console.warn("Try-on asset load error:", err.message);
+      this.fallbackGarment();
+    }
+  }
+
+  fallbackGarment() {
+    this.garmentImage.crossOrigin = "anonymous";
+    this.garmentImage.src = "/assets/overlays/velvet_dress.png";
+    this.garmentImage.onload = () => {
+      this.garmentLoaded = true;
+    };
+  }
+
+  /**
+   * Switch active garment in the live fitting room without restarting camera
+   */
+  async switchGarment(newProdId, overlayPath = null, category = "Default") {
+    this.productId = newProdId;
+    this.currentGarmentCategory = category;
+    this.tryonReadyTriggered = false;
+    this.stableFramesCount = 0;
+
+    if (overlayPath) {
+      this.garmentLoaded = false;
+      this.garmentImage.crossOrigin = "anonymous";
+      this.garmentImage.src = overlayPath;
+      this.garmentImage.onload = () => {
+        this.garmentLoaded = true;
+        utils.showToast("Garment switched in Fitting Studio", "success");
+      };
+    } else {
+      await this.loadGarmentAsset(newProdId);
     }
   }
 
@@ -92,7 +129,7 @@ export class VirtualTryOnStudio {
   async startWebcam() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: "user" },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
         audio: false,
       });
 
@@ -102,11 +139,11 @@ export class VirtualTryOnStudio {
       this.canvas.width = this.video.videoWidth || 640;
       this.canvas.height = this.video.videoHeight || 480;
 
-      this.updateHudStatus("DETECTING_USER", "Please stand in front of the camera");
+      this.updateHudStatus("CALIBRATING", "Stand in view of the mirror to align shoulders");
 
       // Frame Processing Loop
       const processFrame = async () => {
-        if (this.pose && this.video.readyState >= 2) {
+        if (!this.isPhotoMode && this.pose && this.video.readyState >= 2) {
           await this.pose.send({ image: this.video });
         }
         requestAnimationFrame(processFrame);
@@ -114,7 +151,7 @@ export class VirtualTryOnStudio {
       requestAnimationFrame(processFrame);
     } catch (err) {
       console.error("Camera access denied or error:", err);
-      this.updateHudStatus("CAMERA_DENIED", "Camera access denied. Use photo upload fallback below.");
+      this.updateHudStatus("CAMERA_DENIED", "Camera access blocked. Use photo upload below.");
       const fallbackEl = document.getElementById("photo-fallback-panel");
       if (fallbackEl) fallbackEl.style.display = "block";
     }
@@ -125,58 +162,86 @@ export class VirtualTryOnStudio {
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    // If photo mode, draw background photo first
+    if (this.isPhotoMode && this.uploadedPhoto) {
+      this.ctx.drawImage(this.uploadedPhoto, 0, 0, this.canvas.width, this.canvas.height);
+    }
+
     if (!results.poseLandmarks) {
       this.stableFramesCount = 0;
-      this.updateHudStatus("SEARCHING", "Please position yourself inside the frame");
+      this.updateHudStatus("SEARCHING", "Position your upper body inside the frame");
       return;
     }
 
     const landmarks = results.poseLandmarks;
 
-    // Body Landmark Indices (MediaPipe)
+    // MediaPipe Key Upper Body Landmarks:
     // 11: Left Shoulder, 12: Right Shoulder
     // 23: Left Hip, 24: Right Hip
+    // 0: Nose (head elevation reference)
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
     const leftHip = landmarks[23];
     const rightHip = landmarks[24];
 
-    if (!leftShoulder || !rightShoulder || leftShoulder.visibility < 0.4 || rightShoulder.visibility < 0.4) {
+    if (!leftShoulder || !rightShoulder || leftShoulder.visibility < 0.35 || rightShoulder.visibility < 0.35) {
       this.stableFramesCount = 0;
-      this.updateHudStatus("SEARCHING", "Step back so upper torso and shoulders are visible");
+      this.updateHudStatus("SEARCHING", "Step back slightly so shoulders and chest are visible");
       return;
     }
 
     const W = this.canvas.width;
     const H = this.canvas.height;
 
-    // Calculate Screen Coordinates
+    // Pixel coordinates in unmirrored video frame
     const lsX = leftShoulder.x * W;
     const lsY = leftShoulder.y * H;
     const rsX = rightShoulder.x * W;
     const rsY = rightShoulder.y * H;
 
-    // Shoulder Width & Angle
-    const dx = rsX - lsX;
-    const dy = rsY - lsY;
-    const shoulderDist = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
+    // Shoulder Span (Euclidean distance)
+    const rawDx = lsX - rsX;
+    const rawDy = rsY - lsY;
+    const shoulderDist = Math.max(30, Math.sqrt(rawDx * rawDx + rawDy * rawDy));
 
-    // Torso Center
+    // Anatomical Shoulder Tilt Angle:
+    // When mirrored, tilt angle rotates relative to horizontal line:
+    let angle = Math.atan2(rawDy, Math.abs(rawDx));
+    // Clamp angle to natural human range (-30 to +30 degrees)
+    angle = Math.max(-0.52, Math.min(0.52, angle));
+
+    // Collar / Clavicle Center Anchor
     const rawCenterX = (lsX + rsX) / 2;
     const rawCenterY = (lsY + rsY) / 2;
 
-    // Garment Scaling (Shoulder span factor + hip length estimation)
-    let torsoHeight = shoulderDist * 1.35;
-    if (leftHip && rightHip && leftHip.visibility > 0.4 && rightHip.visibility > 0.4) {
+    // Torso Height calculation (using hips if visible, or anatomical head/shoulder ratio)
+    let torsoHeight = shoulderDist * 1.55;
+    if (leftHip && rightHip && leftHip.visibility > 0.35 && rightHip.visibility > 0.35) {
       const hipMidY = ((leftHip.y + rightHip.y) / 2) * H;
-      torsoHeight = Math.max(torsoHeight, (hipMidY - rawCenterY) * 1.25);
+      const detectedTorso = hipMidY - rawCenterY;
+      if (detectedTorso > shoulderDist * 0.8) {
+        torsoHeight = detectedTorso;
+      }
     }
 
-    const targetWidth = shoulderDist * 1.85;
-    const targetHeight = torsoHeight * 1.3;
+    // Determine Garment Dimensions based on Category / Style
+    let fitWidthFactor = 1.68 * this.userSpan;
+    let fitHeightFactor = 1.35;
 
-    // Smoothing with Exponential Moving Average
+    // Dresses (Evening gowns, cocktail dresses) extend down past the hips
+    const isDress = this.currentGarmentCategory.toLowerCase().includes("dress") ||
+                    (this.garmentImage.src && this.garmentImage.src.includes("dress")) ||
+                    (this.garmentImage.src && this.garmentImage.src.includes("gown"));
+
+    if (isDress) {
+      fitWidthFactor = 1.55 * this.userSpan;
+      fitHeightFactor = 2.15; // Extends gracefully to knees/calves
+    }
+
+    const targetWidth = shoulderDist * fitWidthFactor * this.userScale;
+    const targetHeight = torsoHeight * fitHeightFactor * this.userScale;
+
+    // Smoothing with Exponential Moving Average (EMA)
     if (this.smoothedTorso.width === 0) {
       this.smoothedTorso.x = rawCenterX;
       this.smoothedTorso.y = rawCenterY;
@@ -192,11 +257,11 @@ export class VirtualTryOnStudio {
       this.smoothedTorso.angle = a * angle + (1 - a) * this.smoothedTorso.angle;
     }
 
-    // Check Frame Stability
+    // Check Frame Stability for AI Stylist Trigger
     const movement = Math.hypot(rawCenterX - this.lastCenter.x, rawCenterY - this.lastCenter.y);
     this.lastCenter = { x: rawCenterX, y: rawCenterY };
 
-    if (movement < 4.0) {
+    if (movement < 4.5) {
       this.stableFramesCount++;
     } else {
       this.stableFramesCount = Math.max(0, this.stableFramesCount - 2);
@@ -209,26 +274,43 @@ export class VirtualTryOnStudio {
         this.triggerAiStyling();
       }
     } else {
-      this.updateHudStatus("CALIBRATING", `Hold position to calibrate (${Math.round((this.stableFramesCount / this.stableThreshold) * 100)}%)`);
+      const pct = Math.min(100, Math.round((this.stableFramesCount / this.stableThreshold) * 100));
+      this.updateHudStatus("CALIBRATING", `Aligning garment to body contours (${pct}%)`);
     }
 
-    // Render Garment Overlay onto Canvas
-    this.drawGarmentOverlay();
+    // Render Fitted Garment Overlay onto Canvas
+    this.drawGarmentOverlay(isDress);
   }
 
-  drawGarmentOverlay() {
+  drawGarmentOverlay(isDress) {
     if (!this.garmentLoaded) return;
 
     const { x, y, width, height, angle } = this.smoothedTorso;
 
     this.ctx.save();
-    this.ctx.translate(x, y + height * 0.22); // Center over chest and torso
+    this.ctx.globalAlpha = this.userOpacity;
+
+    // Natural shadow for depth and layering over the user's clothes
+    this.ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+    this.ctx.shadowBlur = 16;
+    this.ctx.shadowOffsetY = 6;
+
+    // Translate to clavicle/shoulder midpoint
+    this.ctx.translate(x, y);
+
+    // Apply shoulder tilt rotation
     this.ctx.rotate(angle);
+
+    // Precise vertical offset:
+    // Garment neckline sits right at or slightly above the clavicle line
+    // -height * 0.08 places the top collar nicely at the neck level
+    const collarTopOffset = isDress ? (-height * 0.06) : (-height * 0.09);
+    const finalOffsetY = collarTopOffset + this.userOffsetY;
 
     this.ctx.drawImage(
       this.garmentImage,
       -width / 2,
-      -height / 2,
+      finalOffsetY,
       width,
       height
     );
@@ -237,7 +319,7 @@ export class VirtualTryOnStudio {
   }
 
   triggerAiStyling() {
-    console.log("TRYON_READY triggered -> Calling AI Stylist Pipeline...");
+    console.log("TRYON_READY -> Triggering AI Stylist Consultation...");
     ai.requestRecommendation(this.productId, this.currentVariant, this.avatarManager);
   }
 
@@ -258,31 +340,34 @@ export class VirtualTryOnStudio {
     }
   }
 
-  showNotice(msg) {
-    utils.showToast(msg, "info");
-  }
-
-  // Handle Photo Fallback File Upload
-  handlePhotoUpload(file) {
+  // Handle Photo Upload (for trying on photo of oneself)
+  async handlePhotoUpload(file) {
+    this.isPhotoMode = true;
     const reader = new FileReader();
+
     reader.onload = (e) => {
       const img = new Image();
-      img.onload = () => {
-        if (this.ctx && this.canvas) {
-          this.canvas.width = img.width;
-          this.canvas.height = img.height;
+      img.onload = async () => {
+        this.uploadedPhoto = img;
+        this.canvas.width = img.width;
+        this.canvas.height = img.height;
+
+        this.updateHudStatus("CALIBRATING", "Analyzing body landmarks on photo...");
+
+        if (this.pose) {
+          // Process pose landmarks on the uploaded photo
+          await this.pose.send({ image: img });
+          this.updateHudStatus("TRYON_READY", "Garment fitted to photograph.");
+          this.triggerAiStyling();
+        } else {
+          // Fallback static composite if pose library is unavailable
           this.ctx.drawImage(img, 0, 0);
-          // If garment is available, draw at center
           if (this.garmentLoaded) {
-            this.ctx.drawImage(
-              this.garmentImage,
-              img.width * 0.25,
-              img.height * 0.25,
-              img.width * 0.5,
-              img.height * 0.55
-            );
+            const gw = img.width * 0.55;
+            const gh = img.height * 0.65;
+            this.ctx.drawImage(this.garmentImage, (img.width - gw) / 2, img.height * 0.22, gw, gh);
           }
-          this.updateHudStatus("TRYON_READY", "Photo try-on rendered successfully.");
+          this.updateHudStatus("TRYON_READY", "Photo try-on rendered.");
           this.triggerAiStyling();
         }
       };

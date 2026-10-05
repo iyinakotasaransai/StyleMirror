@@ -61,9 +61,9 @@ export const auth = {
       return false;
     }
 
-    if (requiredRole && !this.hasRole(requiredRole)) {
+    if (requiredRole && !this.hasRole(requiredRole) && !this.hasRole("ADMIN")) {
       alert("Access Denied: You do not possess the required permissions for this area.");
-      window.location.href = "/pages/home.html";
+      window.location.href = "/index.html";
       return false;
     }
 

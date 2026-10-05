@@ -29,6 +29,7 @@
     import { products } from "/js/products.js";
     import { cart } from "/js/cart.js";
     import { wishlist } from "/js/wishlist.js";
+    import { auth } from "/js/auth.js";
     import { utils } from "/js/utils.js";
     import "/js/app.js";
 
@@ -38,6 +39,8 @@
 
     async function loadDetails() {
       const container = document.getElementById("details-container");
+      const isSeller = auth.hasRole("SELLER");
+      const isAdmin = auth.hasRole("ADMIN");
       try {
         currentProduct = await products.getProductById(productId);
         if (!currentProduct) {
@@ -132,6 +135,17 @@
                     Virtual Try-On Unavailable for this item
                   </button>
                 `}
+
+                ${(isSeller || isAdmin) ? `
+                  <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--accent-gold); display: flex; gap: 10px; width: 100%;">
+                    <a href="/pages/seller/product-form.html?id=${currentProduct.id}" class="btn btn-outline btn-sm" style="flex: 1;">
+                      ✏️ Edit Garment
+                    </a>
+                    <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm" style="flex: 1; background: linear-gradient(135deg, #d4af37, #aa8214); color: #000; font-weight: 700; border: none;">
+                      + Add New Dress
+                    </a>
+                  </div>
+                ` : ''}
               </div>
             </div>
           </div>

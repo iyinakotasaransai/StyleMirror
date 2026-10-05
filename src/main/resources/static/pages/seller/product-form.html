@@ -134,9 +134,24 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="overlay-path">Transparent Try-On Overlay (PNG)</label>
+              <select id="preset-overlay-select" class="form-input" style="margin-bottom: 8px;">
+                <option value="">-- Choose Realistic Pre-Built Garment or Upload Your Own --</option>
+                <option value="/assets/overlays/velvet_dress.png">👗 [Women] Royal Velvet Cocktail Gown</option>
+                <option value="/assets/overlays/emerald_gown.png">👗 [Women] Emerald Royal Satin Gala Dress</option>
+                <option value="/assets/overlays/silk_dress.png">👗 [Women] Floral Silk Wrap Midi Dress</option>
+                <option value="/assets/overlays/slim_blazer.png">👔 [Men] Italian Wool Slim-Fit Blazer</option>
+                <option value="/assets/overlays/tuxedo_suit.png">👔 [Men] Black-Tie Royal Tuxedo Suit</option>
+                <option value="/assets/overlays/oxford_shirt.png">👔 [Men] Classic Tailored Oxford Shirt</option>
+                <option value="/assets/overlays/executive_shirt.png">👔 [Men] Monochrome Executive Formal Shirt</option>
+                <option value="/assets/overlays/bomber_jacket.png">🧥 [Men] Cyber Techwear Bomber Jacket</option>
+                <option value="/assets/overlays/denim_jacket.png">🧥 [Men] Vintage Washed Denim Trucker Jacket</option>
+                <option value="/assets/overlays/graphic_hoodie.png">🧥 [Streetwear] Heavyweight Graphic Hoodie</option>
+                <option value="/assets/overlays/linen_tee.png">👕 [Men] Minimalist Linen Summer Tee</option>
+                <option value="/assets/overlays/acid_tee.png">👕 [Streetwear] Acid Wash Boxy Tee</option>
+              </select>
               <input type="file" id="overlay-file" class="form-input" accept="image/png">
-              <input type="text" id="overlay-path" class="form-input" placeholder="/assets/overlays/tuxedo-overlay.png" style="margin-top: 6px;">
-              <small style="color: var(--text-dim);">Direct path or upload high-res transparent PNG torso cut.</small>
+              <input type="text" id="overlay-path" class="form-input" placeholder="/assets/overlays/velvet_dress.png" style="margin-top: 6px;">
+              <small style="color: var(--text-dim);">Pick from luxury library above or upload custom transparent PNG.</small>
             </div>
             <div class="form-group">
               <label class="form-label" for="glb-path">3D Avatar Garment Model (.glb / .gltf)</label>
@@ -340,6 +355,12 @@
     function setupEventListeners() {
       document.getElementById("btn-add-variant").addEventListener("click", () => {
         addVariantRow();
+      });
+
+      document.getElementById("preset-overlay-select").addEventListener("change", (e) => {
+        if (e.target.value) {
+          document.getElementById("overlay-path").value = e.target.value;
+        }
       });
 
       // Product image file upload

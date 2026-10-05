@@ -17,22 +17,109 @@
   <!-- MediaPipe Pose Pinned -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+
+  <style>
+    .fit-controls-panel {
+      background: rgba(14, 18, 26, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      align-items: center;
+    }
+    .fit-control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .fit-control-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+    }
+    .fit-slider {
+      accent-color: var(--accent-gold);
+      cursor: pointer;
+      width: 100%;
+    }
+    .wardrobe-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .wardrobe-carousel {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .wardrobe-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .wardrobe-card:hover, .wardrobe-card.active {
+      border-color: var(--accent-gold);
+      background: rgba(212, 175, 55, 0.1);
+      transform: translateY(-2px);
+    }
+    .wardrobe-thumb {
+      width: 100%;
+      height: 75px;
+      object-fit: contain;
+      margin-bottom: 6px;
+    }
+    .wardrobe-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wardrobe-cat {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+  </style>
 </head>
 <body>
   <div id="site-header-container"></div>
 
   <main class="main-content">
     <div class="container">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
         <div>
           <span class="product-brand">AUGMENTED REALITY FIT STUDIO</span>
           <h1 class="display-title" style="font-size: 2.2rem;">VIRTUAL <span class="cyan-text">TRY-ON &amp; AI STYLIST</span></h1>
         </div>
-        <a href="/pages/products.html" class="btn btn-outline btn-sm">&larr; Back to Catalog</a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <!-- Seller / Admin ONLY Add New Dress Button (Strictly hidden for Buyers) -->
+          <div id="merchant-tryon-actions" style="display: none;">
+            <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #d4af37, #aa8214); color: #000; font-weight: 700; border: none;">
+              + Add New Dress (Seller/Admin)
+            </a>
+          </div>
+          <a href="/pages/products.html" class="btn btn-outline btn-sm">&larr; Back to Catalog</a>
+        </div>
       </div>
 
       <div class="studio-grid">
-        <!-- LEFT: Live Webcam Stage & Canvas Overlay -->
+        <!-- LEFT: Live Webcam Stage, Fit Sliders & Wardrobe Switcher -->
         <div>
           <div class="tryon-stage-card">
             <!-- Hidden Video Feed Stream -->
@@ -45,11 +132,13 @@
             <div class="stage-hud">
               <div id="tryon-status-indicator" class="status-indicator">
                 <span class="status-dot"></span>
-                <span id="tryon-status-text">INITIALIZING</span>
+                <span id="tryon-status-text">CALIBRATING</span>
               </div>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerRecalibrate()" style="pointer-events: auto;">
-                Recalibrate
-              </button>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerRecalibrate()" style="pointer-events: auto;">
+                  Recalibrate
+                </button>
+              </div>
             </div>
 
             <!-- Landmark Guide Instructions -->
@@ -65,13 +154,71 @@
             </div>
           </div>
 
-          <!-- Photo Upload Fallback Panel (Visible if camera denied) -->
-          <div id="photo-fallback-panel" class="card" style="margin-top: 18px; display: none; border-color: var(--status-warning);">
-            <h4 style="color: var(--status-warning); margin-bottom: 6px;">Camera Access Fallback</h4>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">
-              Camera permission was not granted. Upload a full-torso photograph to simulate the garment fitting.
-            </p>
-            <input type="file" id="fallback-photo-input" accept="image/*" class="form-input" />
+          <!-- Real-Time Interactive Fit Adjuster Sliders -->
+          <div class="fit-controls-panel">
+            <div class="fit-control-item">
+              <div class="fit-control-label">
+                <span>Garment Size</span>
+                <span id="val-fit-scale">100%</span>
+              </div>
+              <input type="range" id="slider-fit-scale" class="fit-slider" min="0.8" max="1.3" step="0.02" value="1.0">
+            </div>
+
+            <div class="fit-control-item">
+              <div class="fit-control-label">
+                <span>Collar Height</span>
+                <span id="val-fit-offset">0px</span>
+              </div>
+              <input type="range" id="slider-fit-offset" class="fit-slider" min="-60" max="60" step="2" value="0">
+            </div>
+
+            <div class="fit-control-item">
+              <div class="fit-control-label">
+                <span>Shoulder Drape</span>
+                <span id="val-fit-span">100%</span>
+              </div>
+              <input type="range" id="slider-fit-span" class="fit-slider" min="0.8" max="1.3" step="0.02" value="1.0">
+            </div>
+
+            <div class="fit-control-item">
+              <div class="fit-control-label">
+                <span>Fabric Blend</span>
+                <span id="val-fit-opacity">95%</span>
+              </div>
+              <input type="range" id="slider-fit-opacity" class="fit-slider" min="0.65" max="1.0" step="0.02" value="0.95">
+            </div>
+          </div>
+
+          <!-- Wardrobe Collection Quick-Switcher (Men & Women Outfits) -->
+          <div class="card" style="margin-top: 16px; padding: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h3 style="font-size: 1rem; font-family: var(--font-heading); color: var(--accent-gold); margin: 0;">
+                👔👗 Instant Wardrobe Switcher (Try On Real Dresses)
+              </h3>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">Tap to wear instantly</span>
+            </div>
+
+            <div class="wardrobe-tabs">
+              <button class="btn btn-sm btn-primary w-tab-btn" data-filter="ALL">All Designs</button>
+              <button class="btn btn-sm btn-outline w-tab-btn" data-filter="WOMEN">👗 Women's Dresses</button>
+              <button class="btn btn-sm btn-outline w-tab-btn" data-filter="MEN">👔 Men's Collection</button>
+              <button class="btn btn-sm btn-outline w-tab-btn" data-filter="OUTERWEAR">🧥 Outerwear</button>
+            </div>
+
+            <div id="wardrobe-carousel-container" class="wardrobe-carousel">
+              <!-- Dynamically populated wardrobe items -->
+            </div>
+          </div>
+
+          <!-- Photo Upload Alternative (Try On Your Photo) -->
+          <div class="card" style="margin-top: 14px; padding: 14px 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="font-size: 0.88rem; color: var(--accent-cyan);">📸 Try On Your Photo:</strong>
+                <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 6px;">Upload a personal full-body selfie or portrait photograph</span>
+              </div>
+              <input type="file" id="photo-upload-input" accept="image/*" style="font-size: 0.8rem; max-width: 220px;" />
+            </div>
           </div>
         </div>
 
@@ -80,9 +227,9 @@
           <!-- Active Garment Quick Bar -->
           <div class="tryon-product-bar">
             <div>
-              <span id="active-brand" class="product-brand">MIRROR</span>
-              <h3 id="active-product-title" style="font-size: 1.1rem;">Cyberpunk Bomber Jacket</h3>
-              <span id="active-product-price" class="product-price">$149.99</span>
+              <span id="active-brand" class="product-brand">MIRROR ATELIER</span>
+              <h3 id="active-product-title" style="font-size: 1.1rem;">Midnight Velvet Cocktail Dress</h3>
+              <span id="active-product-price" class="product-price">$289.00</span>
             </div>
             <button id="studio-add-cart-btn" class="btn btn-primary btn-sm" onclick="window.addActiveToCart()">
               Add to Bag
@@ -139,21 +286,61 @@
     import { cart } from "/js/cart.js";
     import { ai } from "/js/ai.js";
     import { voice } from "/js/voice.js";
+    import { auth } from "/js/auth.js";
     import { utils } from "/js/utils.js";
     import "/js/app.js";
 
-    const productId = utils.getQueryParam("productId") || 1;
+    let productId = utils.getQueryParam("productId") || 3;
     let studio = null;
     let avatarManager = null;
     let currentGarment = null;
+    let catalogList = [];
+    let activeFilter = "ALL";
 
     async function initStudio() {
+      // Check role: Show "+ Add New Dress" ONLY to Sellers and Admins
+      const isSeller = auth.hasRole("SELLER");
+      const isAdmin = auth.hasRole("ADMIN");
+      const merchantActions = document.getElementById("merchant-tryon-actions");
+      if (merchantActions && (isSeller || isAdmin)) {
+        merchantActions.style.display = "block";
+      }
+
       // 1. Initialize Three.js 3D Avatar
       avatarManager = new AvatarManager("avatar-canvas-container");
 
-      // 2. Load Product Metadata
+      // 2. Fetch catalog products to populate wardrobe switcher
       try {
-        currentGarment = await products.getProductById(productId);
+        catalogList = await products.getAllProducts();
+        renderWardrobe();
+      } catch (e) {
+        console.warn("Catalog fetch error:", e);
+      }
+
+      // 3. Load Active Garment
+      await loadGarmentMetadata(productId);
+
+      // 4. Initialize Virtual Try-On Studio (MediaPipe Pose + Overlay Canvas)
+      studio = new VirtualTryOnStudio({
+        videoId: "webcam-video",
+        canvasId: "tryon-canvas",
+        productId: productId,
+        avatarManager: avatarManager,
+      });
+
+      setupFitSliders();
+
+      // 5. Photo upload listener
+      document.getElementById("photo-upload-input").addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          studio.handlePhotoUpload(e.target.files[0]);
+        }
+      });
+    }
+
+    async function loadGarmentMetadata(id) {
+      try {
+        currentGarment = await products.getProductById(id);
         if (currentGarment) {
           document.getElementById("active-brand").textContent = currentGarment.brand;
           document.getElementById("active-product-title").textContent = currentGarment.name;
@@ -162,22 +349,94 @@
       } catch (err) {
         console.warn("Product load err:", err);
       }
+    }
 
-      // 3. Initialize Virtual Try-On Studio (MediaPipe Pose + Overlay Canvas)
-      studio = new VirtualTryOnStudio({
-        videoId: "webcam-video",
-        canvasId: "tryon-canvas",
-        productId: productId,
-        avatarManager: avatarManager,
+    function setupFitSliders() {
+      const sScale = document.getElementById("slider-fit-scale");
+      const sOffset = document.getElementById("slider-fit-offset");
+      const sSpan = document.getElementById("slider-fit-span");
+      const sOpacity = document.getElementById("slider-fit-opacity");
+
+      sScale.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        if (studio) studio.userScale = val;
+        document.getElementById("val-fit-scale").textContent = `${Math.round(val * 100)}%`;
       });
 
-      // 4. Photo upload fallback listener
-      document.getElementById("fallback-photo-input").addEventListener("change", (e) => {
-        if (e.target.files && e.target.files[0]) {
-          studio.handlePhotoUpload(e.target.files[0]);
-        }
+      sOffset.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (studio) studio.userOffsetY = val;
+        document.getElementById("val-fit-offset").textContent = `${val > 0 ? '+' : ''}${val}px`;
+      });
+
+      sSpan.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        if (studio) studio.userSpan = val;
+        document.getElementById("val-fit-span").textContent = `${Math.round(val * 100)}%`;
+      });
+
+      sOpacity.addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        if (studio) studio.userOpacity = val;
+        document.getElementById("val-fit-opacity").textContent = `${Math.round(val * 100)}%`;
       });
     }
+
+    function renderWardrobe() {
+      const container = document.getElementById("wardrobe-carousel-container");
+      if (!container) return;
+
+      const filtered = catalogList.filter(p => {
+        if (!p.tryOnAsset || !p.tryOnAsset.enabled) return false;
+        const cat = (p.categoryName || "").toLowerCase();
+        const name = (p.name || "").toLowerCase();
+
+        if (activeFilter === "WOMEN") {
+          return cat.includes("women") || name.includes("dress") || name.includes("gown");
+        } else if (activeFilter === "MEN") {
+          return cat.includes("men") || cat.includes("formal") || name.includes("shirt") || name.includes("blazer") || name.includes("tuxedo");
+        } else if (activeFilter === "OUTERWEAR") {
+          return cat.includes("outerwear") || cat.includes("streetwear") || name.includes("jacket") || name.includes("hoodie");
+        }
+        return true;
+      });
+
+      container.innerHTML = filtered.map(p => `
+        <div class="wardrobe-card ${p.id == productId ? 'active' : ''}" onclick="window.selectWardrobeItem(${p.id})">
+          <img src="${p.tryOnAsset.overlayImagePath}" class="wardrobe-thumb" alt="${p.name}">
+          <div class="wardrobe-title" title="${p.name}">${p.name}</div>
+          <div class="wardrobe-cat">${p.brand}</div>
+        </div>
+      `).join("");
+    }
+
+    window.selectWardrobeItem = async function(id) {
+      productId = id;
+      const target = catalogList.find(p => p.id === id);
+      if (!target) return;
+
+      document.querySelectorAll(".wardrobe-card").forEach(c => c.classList.remove("active"));
+      event.currentTarget.classList.add("active");
+
+      await loadGarmentMetadata(id);
+      if (studio) {
+        await studio.switchGarment(id, target.tryOnAsset.overlayImagePath, target.categoryName || "Default");
+      }
+    };
+
+    // Filter Buttons
+    document.querySelectorAll(".w-tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".w-tab-btn").forEach(b => {
+          b.classList.remove("btn-primary");
+          b.classList.add("btn-outline");
+        });
+        btn.classList.remove("btn-outline");
+        btn.classList.add("btn-primary");
+        activeFilter = btn.dataset.filter;
+        renderWardrobe();
+      });
+    });
 
     window.triggerRecalibrate = function() {
       if (studio) {
