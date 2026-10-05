@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Platform Users - StyleMirror Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">IDENTITY DIRECTORY</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">PLATFORM <span class="gold-text">USERS</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="/pages/admin/dashboard.html" class="btn btn-outline btn-sm">&larr; Admin Suite</a>
+          <a href="/pages/admin/sellers.html" class="btn btn-secondary btn-sm">Sellers &rarr;</a>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <input type="text" id="user-search-input" class="form-input" placeholder="Search users by name, email, or role..." style="max-width: 400px;">
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Email Address</th>
+              <th>Phone</th>
+              <th>Assigned Roles</th>
+              <th>Status</th>
+              <th>Registration Date</th>
+              <th>Account Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let allUsers = [];
+
+    async function loadUsers() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      const tbody = document.getElementById("admin-users-tbody");
+      try {
+        allUsers = await admin.getUsers();
+        renderUsers(allUsers);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Failed to load user records: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById("admin-users-tbody");
+      if (users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">No users found matching query.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td><code>#USR-${u.id}</code></td>
+          <td style="font-weight: 600;">${u.fullName}</td>
+          <td>${u.email}</td>
+          <td style="color: var(--text-dim);">${u.phone || 'N/A'}</td>
+          <td>
+            ${(u.roles || []).map(r => `
+              <span class="status-pill ${r === 'ROLE_ADMIN' ? 'cyan' : (r === 'ROLE_SELLER' ? 'warning' : 'purple')}" style="font-size: 0.7rem;">
+                ${r.replace('ROLE_', '')}
+              </span>
+            `).join(" ")}
+          </td>
+          <td>
+            <span class="status-pill ${u.active ? 'success' : 'danger'}">
+              ${u.active ? 'Active' : 'Suspended'}
+            </span>
+          </td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">${utils.formatDate(u.createdAt)}</td>
+          <td>
+            <button onclick="window.smToggleUser(${u.id}, ${!u.active})" class="btn ${u.active ? 'btn-danger' : 'btn-primary'} btn-sm" style="font-size: 0.75rem; padding: 4px 8px;">
+              ${u.active ? 'Suspend' : 'Activate'}
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    window.smToggleUser = async function(id, newActiveStatus) {
+      const actionText = newActiveStatus ? "activate" : "suspend";
+      if (!confirm(`Are you sure you want to ${actionText} this user?`)) return;
+
+      try {
+        await admin.toggleUser(id, newActiveStatus);
+        const target = allUsers.find(u => u.id === id);
+        if (target) target.active = newActiveStatus;
+        renderUsers(allUsers);
+      } catch (err) {
+        // handled in toast
+      }
+    };
+
+    document.getElementById("user-search-input").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = allUsers.filter(u => 
+        u.fullName.toLowerCase().includes(q) || 
+        u.email.toLowerCase().includes(q) ||
+        (u.roles && u.roles.some(r => r.toLowerCase().includes(q)))
+      );
+      renderUsers(filtered);
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>

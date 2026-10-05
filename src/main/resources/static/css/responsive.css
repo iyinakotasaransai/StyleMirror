@@ -1,0 +1,54 @@
+/* ==============================================================
+   StyleMirror - Responsive Media Queries
+   Mobile & Tablet Adaptive Layouts
+   ============================================================== */
+
+@media (max-width: 1024px) {
+  .catalog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 68px;
+  }
+
+  .main-nav {
+    display: none; /* Mobile menu can toggle */
+  }
+
+  .cart-grid, .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title {
+    font-size: 2.4rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .tryon-stage-card {
+    aspect-ratio: 3/4;
+  }
+}

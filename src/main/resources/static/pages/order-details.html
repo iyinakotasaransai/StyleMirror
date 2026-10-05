@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracking - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+        <div>
+          <span class="product-brand">ORDER FULFILLMENT SPECIFICATIONS</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">ORDER <span class="gold-text" id="order-heading-number">DETAILS</span></h1>
+        </div>
+        <a href="/pages/orders.html" class="btn btn-outline btn-sm">&larr; Back to Order History</a>
+      </div>
+
+      <div id="order-details-container">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { orders } from "/js/orders.js";
+    import { utils } from "/js/utils.js";
+    import { auth } from "/js/auth.js";
+    import "/js/app.js";
+
+    const orderId = utils.getQueryParam("id");
+
+    async function loadDetails() {
+      const container = document.getElementById("order-details-container");
+
+      if (!auth.isLoggedIn()) {
+        window.location.href = "/pages/login.html";
+        return;
+      }
+
+      try {
+        const order = await orders.getOrderById(orderId);
+        document.getElementById("order-heading-number").textContent = `#${order.orderNumber}`;
+
+        container.innerHTML = `
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px;">
+            <!-- Left: Order Items & Historical Snapshot -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 1.25rem;">Purchased Items</h3>
+                <span class="status-pill ${order.status === 'DELIVERED' ? 'success' : 'info'}">
+                  Status: ${order.status}
+                </span>
+              </div>
+
+              <table class="data-table" style="margin-bottom: 24px;">
+                <thead>
+                  <tr>
+                    <th>Item Description</th>
+                    <th>Size / Color</th>
+                    <th>Unit Price</th>
+                    <th>Qty</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${order.items.map(i => `
+                    <tr>
+                      <td style="font-weight: 600;">${i.productName}</td>
+                      <td>${i.size} / ${i.color}</td>
+                      <td>${utils.formatCurrency(i.unitPrice)}</td>
+                      <td>${i.quantity}</td>
+                      <td style="font-weight: 700; color: var(--accent-gold);">${utils.formatCurrency(i.subtotal)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+
+              <div style="display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+                <div style="text-align: right;">
+                  <span style="font-size: 0.9rem; color: var(--text-muted); display: block;">Total Authorized (Includes Tax &amp; Shipping)</span>
+                  <span style="font-size: 1.6rem; font-weight: 800; color: var(--accent-gold);">${utils.formatCurrency(order.totalAmount)}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Shipping & Payment Snapshot -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+              <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 14px;">Shipping Details</h3>
+                <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 10px; line-height: 1.6;">
+                  ${order.shippingAddress}
+                </p>
+                <div style="font-size: 0.88rem; color: var(--text-dim);">
+                  <strong>Recipient Phone:</strong> ${order.contactPhone}
+                </div>
+              </div>
+
+              <div class="card">
+                <h3 style="font-size: 1.15rem; margin-bottom: 14px;">Payment Audit</h3>
+                <div style="font-size: 0.9rem; display: flex; flex-direction: column; gap: 8px;">
+                  <div><strong>Method:</strong> ${order.paymentMethod || "Simulated Card"}</div>
+                  <div><strong>Payment Status:</strong> <span class="status-pill success">${order.paymentStatus || "PAID"}</span></div>
+                  <div><strong>Txn Reference:</strong> <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-cyan);">${order.transactionId || "TXN-SIM-VERIFIED"}</span></div>
+                  <div><strong>Placed At:</strong> ${utils.formatDate(order.createdAt)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
+      }
+    }
+
+    loadDetails();
+  </script>
+</body>
+</html>

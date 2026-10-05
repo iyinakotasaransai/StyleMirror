@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Categories - StyleMirror Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">TAXONOMY ARCHITECTURE</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">FASHION <span class="gold-text">CATEGORIES</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="/pages/admin/dashboard.html" class="btn btn-outline btn-sm">&larr; Admin Suite</a>
+          <button id="btn-open-category-modal" class="btn btn-primary btn-sm">+ Add New Category</button>
+        </div>
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Category Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Created Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-categories-tbody">
+            <tr>
+              <td colspan="6" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Category Create/Edit Modal -->
+  <div id="cat-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 id="cat-modal-title" style="font-family: var(--font-heading); color: var(--accent-gold);">Create New Category</h3>
+        <button id="btn-close-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="cat-form" style="padding: 20px;">
+        <input type="hidden" id="cat-id">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="cat-name">Category Name *</label>
+          <input type="text" id="cat-name" class="form-input" placeholder="e.g. Haute Couture Gowns" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="cat-desc">Description</label>
+          <textarea id="cat-desc" class="form-input" rows="3" placeholder="Artisanal dresses and evening wear..."></textarea>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+          <input type="checkbox" id="cat-active" checked style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
+          <label for="cat-active" style="margin: 0; cursor: pointer;">Active Category</label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btn-cancel-modal" class="btn btn-outline btn-sm">Cancel</button>
+          <button type="submit" id="btn-save-cat" class="btn btn-primary btn-sm">Save Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let categoriesList = [];
+
+    async function loadCategories() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      const tbody = document.getElementById("admin-categories-tbody");
+      try {
+        categoriesList = await admin.getCategories();
+        renderCategories();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Failed to load categories: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderCategories() {
+      const tbody = document.getElementById("admin-categories-tbody");
+      if (categoriesList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No categories defined.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = categoriesList.map(c => `
+        <tr>
+          <td><code>#CAT-${c.id}</code></td>
+          <td style="font-weight: 700; color: var(--accent-gold);">${c.name}</td>
+          <td style="color: var(--text-muted); font-size: 0.85rem;">${c.description || 'No description'}</td>
+          <td>
+            <span class="status-pill ${c.active ? 'success' : 'danger'}">
+              ${c.active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td style="font-size: 0.82rem; color: var(--text-muted);">${utils.formatDate(c.createdAt)}</td>
+          <td>
+            <div class="action-btns">
+              <button onclick="window.smEditCategory(${c.id})" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 8px;">
+                Edit
+              </button>
+              <button onclick="window.smDeleteCategory(${c.id})" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 8px;">
+                Deactivate
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    const modal = document.getElementById("cat-modal");
+
+    function openModal(cat = null) {
+      if (cat) {
+        document.getElementById("cat-modal-title").textContent = "Edit Category";
+        document.getElementById("cat-id").value = cat.id;
+        document.getElementById("cat-name").value = cat.name;
+        document.getElementById("cat-desc").value = cat.description || "";
+        document.getElementById("cat-active").checked = cat.active !== false;
+      } else {
+        document.getElementById("cat-modal-title").textContent = "Create New Category";
+        document.getElementById("cat-id").value = "";
+        document.getElementById("cat-name").value = "";
+        document.getElementById("cat-desc").value = "";
+        document.getElementById("cat-active").checked = true;
+      }
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    document.getElementById("btn-open-category-modal").addEventListener("click", () => openModal());
+    document.getElementById("btn-close-modal").addEventListener("click", closeModal);
+    document.getElementById("btn-cancel-modal").addEventListener("click", closeModal);
+
+    document.getElementById("cat-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("cat-id").value;
+      const name = document.getElementById("cat-name").value.trim();
+      const description = document.getElementById("cat-desc").value.trim();
+      const active = document.getElementById("cat-active").checked;
+
+      const payload = { name, description, active };
+
+      try {
+        if (id) {
+          await admin.updateCategory(id, payload);
+        } else {
+          await admin.createCategory(payload);
+        }
+        closeModal();
+        await loadCategories();
+      } catch (err) {
+        // handled in toast
+      }
+    });
+
+    window.smEditCategory = function(id) {
+      const cat = categoriesList.find(c => c.id === id);
+      if (cat) openModal(cat);
+    };
+
+    window.smDeleteCategory = function(id) {
+      admin.deleteCategory(id);
+    };
+
+    loadCategories();
+  </script>
+</body>
+</html>

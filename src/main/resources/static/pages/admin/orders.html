@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Platform Orders - StyleMirror Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">GLOBAL COMMERCE</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">SYSTEM <span class="gold-text">ORDERS</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="/pages/admin/dashboard.html" class="btn btn-outline btn-sm">&larr; Admin Suite</a>
+          <a href="/pages/admin/reports.html" class="btn btn-secondary btn-sm">Reports &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;" id="admin-order-filters">
+        <button class="btn btn-sm btn-primary filter-tab" data-filter="ALL">All Orders</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="PLACED">Placed</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="CONFIRMED">Confirmed</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="PROCESSING">Processing</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="SHIPPED">Shipped</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="DELIVERED">Delivered</button>
+        <button class="btn btn-sm btn-outline filter-tab" data-filter="CANCELLED">Cancelled</button>
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Garment Items</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Administrative Control</th>
+            </tr>
+          </thead>
+          <tbody id="admin-orders-tbody">
+            <tr>
+              <td colspan="7" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let allOrders = [];
+    let currentFilter = "ALL";
+
+    async function loadOrders() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      const tbody = document.getElementById("admin-orders-tbody");
+      try {
+        allOrders = await admin.getOrders();
+        renderOrders();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Failed to load system orders: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderOrders() {
+      const tbody = document.getElementById("admin-orders-tbody");
+      const list = currentFilter === "ALL" 
+        ? allOrders 
+        : allOrders.filter(o => o.status === currentFilter);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">No orders matching filter (${currentFilter}).</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(o => `
+        <tr>
+          <td>
+            <code>#SM-${o.id}</code>
+            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">
+              ${o.paymentStatus ? `<span class="status-pill ${o.paymentStatus === 'PAID' ? 'success' : 'warning'}" style="font-size: 0.65rem; padding: 2px 6px;">${o.paymentStatus}</span>` : ''}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600;">${o.userName || "Customer"}</div>
+            <div style="font-size: 0.78rem; color: var(--text-dim);">${o.shippingCity || ''}</div>
+          </td>
+          <td style="font-size: 0.85rem; color: var(--text-muted);">${utils.formatDate(o.createdAt)}</td>
+          <td>
+            <div style="font-size: 0.82rem; max-width: 250px;">
+              ${(o.items || []).map(it => `<div>&bull; ${it.productName} (x${it.quantity})</div>`).join("")}
+            </div>
+          </td>
+          <td style="font-weight: 700; color: var(--accent-gold);">${utils.formatCurrency(o.totalAmount)}</td>
+          <td>
+            <span class="status-pill ${getStatusColorClass(o.status)}">
+              ${o.status}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select id="adm-status-${o.id}" class="form-input" style="padding: 4px 6px; font-size: 0.75rem; width: auto; height: 30px;">
+                <option value="PLACED" ${o.status === 'PLACED' ? 'selected' : ''}>PLACED</option>
+                <option value="CONFIRMED" ${o.status === 'CONFIRMED' ? 'selected' : ''}>CONFIRMED</option>
+                <option value="PROCESSING" ${o.status === 'PROCESSING' ? 'selected' : ''}>PROCESSING</option>
+                <option value="SHIPPED" ${o.status === 'SHIPPED' ? 'selected' : ''}>SHIPPED</option>
+                <option value="OUT_FOR_DELIVERY" ${o.status === 'OUT_FOR_DELIVERY' ? 'selected' : ''}>OUT_FOR_DELIVERY</option>
+                <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>DELIVERED</option>
+                <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>CANCELLED</option>
+              </select>
+              <button onclick="window.smAdminStatusUpdate(${o.id})" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.75rem; height: 30px;">
+                Update
+              </button>
+              <a href="/pages/order-details.html?id=${o.id}" class="btn btn-outline btn-sm" style="padding: 3px 8px; font-size: 0.75rem; height: 30px;">
+                View
+              </a>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function getStatusColorClass(status) {
+      switch (status) {
+        case "DELIVERED": return "success";
+        case "SHIPPED":
+        case "OUT_FOR_DELIVERY": return "cyan";
+        case "PROCESSING":
+        case "CONFIRMED": return "purple";
+        case "CANCELLED": return "danger";
+        default: return "warning";
+      }
+    }
+
+    window.smAdminStatusUpdate = async function(orderId) {
+      const select = document.getElementById(`adm-status-${orderId}`);
+      if (!select) return;
+      const status = select.value;
+      try {
+        await admin.updateOrderStatus(orderId, status);
+        const o = allOrders.find(item => item.id === orderId);
+        if (o) o.status = status;
+        renderOrders();
+      } catch (err) {
+        // handled in toast
+      }
+    };
+
+    document.querySelectorAll(".filter-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".filter-tab").forEach(t => {
+          t.classList.remove("btn-primary");
+          t.classList.add("btn-outline");
+        });
+        tab.classList.remove("btn-outline");
+        tab.classList.add("btn-primary");
+        currentFilter = tab.dataset.filter;
+        renderOrders();
+      });
+    });
+
+    loadOrders();
+  </script>
+</body>
+</html>

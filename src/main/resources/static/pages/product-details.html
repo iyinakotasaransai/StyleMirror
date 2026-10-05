@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garment Specifications - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/ecommerce.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div id="details-container">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { products } from "/js/products.js";
+    import { cart } from "/js/cart.js";
+    import { wishlist } from "/js/wishlist.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    const productId = utils.getQueryParam("id") || 1;
+    let currentProduct = null;
+    let selectedVariant = null;
+
+    async function loadDetails() {
+      const container = document.getElementById("details-container");
+      try {
+        currentProduct = await products.getProductById(productId);
+        if (!currentProduct) {
+          container.innerHTML = `<div class="empty-state">Garment not found.</div>`;
+          return;
+        }
+
+        const hasTryOn = currentProduct.tryOnAsset && currentProduct.tryOnAsset.enabled;
+        const mainImg = (currentProduct.imageUrls && currentProduct.imageUrls.length > 0)
+          ? currentProduct.imageUrls[0]
+          : "/assets/products/placeholder.svg";
+
+        // Group variants
+        const variants = currentProduct.variants || [];
+        selectedVariant = variants.length > 0 ? variants[0] : null;
+
+        const sizes = [...new Set(variants.map(v => v.size))];
+        const colors = [...new Set(variants.map(v => v.color))];
+
+        container.innerHTML = `
+          <div class="details-grid">
+            <!-- Left: Gallery -->
+            <div>
+              <div class="gallery-main">
+                <img id="main-product-img" src="${mainImg}" alt="${currentProduct.name}" />
+              </div>
+            </div>
+
+            <!-- Right: Product Specs & Variant Selection -->
+            <div>
+              <span class="product-brand">${currentProduct.brand}</span>
+              <h1 class="display-title" style="font-size: 2.2rem; margin: 8px 0 14px;">${currentProduct.name}</h1>
+              <div style="display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px;">
+                <span id="variant-price" class="product-price" style="font-size: 1.8rem;">
+                  ${utils.formatCurrency(selectedVariant ? selectedVariant.price : currentProduct.basePrice)}
+                </span>
+                <span id="variant-stock-badge" class="status-pill success">
+                  ${selectedVariant ? `${selectedVariant.stock} in stock` : "Available"}
+                </span>
+              </div>
+
+              <p style="color: var(--text-muted); line-height: 1.7; margin-bottom: 24px;">
+                ${currentProduct.description || "Crafted to luxury atelier standards with precision tailoring."}
+              </p>
+
+              <!-- Size Selector -->
+              <div class="variant-picker-section">
+                <span class="form-label">Select Size</span>
+                <div class="variant-pills-row" id="size-pills">
+                  ${sizes.map(s => `
+                    <button type="button" class="variant-pill ${selectedVariant && selectedVariant.size === s ? "active" : ""}"
+                            onclick="window.selectSize('${s}')">
+                      ${s}
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+
+              <!-- Color Selector -->
+              <div class="variant-picker-section">
+                <span class="form-label">Select Color</span>
+                <div class="variant-pills-row" id="color-pills">
+                  ${colors.map(c => `
+                    <button type="button" class="variant-pill ${selectedVariant && selectedVariant.color === c ? "active" : ""}"
+                            onclick="window.selectColor('${c}')">
+                      ${c}
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+
+              <!-- Meta Specs: SKU, Seller -->
+              <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin: 24px 0; font-size: 0.88rem; color: var(--text-muted);">
+                <div style="margin-bottom: 6px;"><strong>SKU:</strong> <span id="meta-sku">${selectedVariant ? selectedVariant.sku : "SKU-N/A"}</span></div>
+                <div><strong>Boutique Seller:</strong> <span>${currentProduct.sellerStoreName || "StyleMirror Atelier"}</span></div>
+              </div>
+
+              <!-- Actions: Add to Cart, Wishlist, AR Try-On -->
+              <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                <button type="button" id="add-to-cart-btn" class="btn btn-primary btn-lg" style="flex: 2;" onclick="window.addToCartAction()">
+                  Add to Shopping Bag
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="window.toggleWishlist(${currentProduct.id}, event)" title="Wishlist">
+                  ♥ Save
+                </button>
+                ${hasTryOn ? `
+                  <a href="/pages/try-on.html?productId=${currentProduct.id}" class="btn btn-cyber btn-lg" style="width: 100%;">
+                    Launch Virtual Try-On Studio
+                  </a>
+                ` : `
+                  <button class="btn btn-secondary btn-lg" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled title="AR asset not enabled">
+                    Virtual Try-On Unavailable for this item
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state">Error loading garment: ${err.message}</div>`;
+      }
+    }
+
+    window.selectSize = function(size) {
+      const match = currentProduct.variants.find(v => v.size === size && (selectedVariant ? v.color === selectedVariant.color : true))
+                 || currentProduct.variants.find(v => v.size === size);
+      if (match) updateSelectedVariant(match);
+    };
+
+    window.selectColor = function(color) {
+      const match = currentProduct.variants.find(v => v.color === color && (selectedVariant ? v.size === selectedVariant.size : true))
+                 || currentProduct.variants.find(v => v.color === color);
+      if (match) updateSelectedVariant(match);
+    };
+
+    function updateSelectedVariant(v) {
+      selectedVariant = v;
+      document.getElementById("variant-price").textContent = utils.formatCurrency(v.price);
+      document.getElementById("variant-stock-badge").textContent = `${v.stock} in stock`;
+      document.getElementById("meta-sku").textContent = v.sku;
+
+      // Update active pills
+      document.querySelectorAll("#size-pills .variant-pill").forEach(el => {
+        el.classList.toggle("active", el.textContent.trim() === v.size);
+      });
+      document.querySelectorAll("#color-pills .variant-pill").forEach(el => {
+        el.classList.toggle("active", el.textContent.trim() === v.color);
+      });
+    }
+
+    window.addToCartAction = async function() {
+      if (!selectedVariant) {
+        utils.showToast("Please choose a valid size and color variant", "warning");
+        return;
+      }
+      try {
+        await cart.addToCart(selectedVariant.id, 1);
+      } catch (err) {
+        // Handled in cart module
+      }
+    };
+
+    loadDetails();
+  </script>
+</body>
+</html>

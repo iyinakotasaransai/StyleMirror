@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Platform Catalog - StyleMirror Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">GLOBAL CATALOG</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">ALL <span class="gold-text">GARMENTS</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="/pages/admin/dashboard.html" class="btn btn-outline btn-sm">&larr; Admin Suite</a>
+          <a href="/pages/admin/orders.html" class="btn btn-secondary btn-sm">Orders &rarr;</a>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <input type="text" id="admin-prod-search" class="form-input" placeholder="Search by garment title, brand, or category..." style="max-width: 420px;">
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Garment Title</th>
+              <th>Brand</th>
+              <th>Category</th>
+              <th>Base Price</th>
+              <th>Variants</th>
+              <th>Virtual Try-On</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-products-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let allProducts = [];
+
+    async function loadProducts() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      const tbody = document.getElementById("admin-products-tbody");
+      try {
+        allProducts = await admin.getProducts();
+        renderProducts(allProducts);
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Failed to load catalog: ${err.message}</td></tr>`;
+      }
+    }
+
+    function renderProducts(list) {
+      const tbody = document.getElementById("admin-products-tbody");
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">No garments match the current criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td>
+            <div style="font-weight: 600;">${p.name}</div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">ID: #${p.id}</span>
+          </td>
+          <td>${p.brand}</td>
+          <td>${p.categoryName || 'Uncategorized'}</td>
+          <td style="font-weight: 700; color: var(--accent-gold);">${utils.formatCurrency(p.basePrice)}</td>
+          <td>${p.variants ? p.variants.length : 0} configured</td>
+          <td>
+            ${p.tryOnAsset && p.tryOnAsset.enabled ? `<span class="status-pill success">AR Active</span>` : `<span class="status-pill warning">No AR</span>`}
+          </td>
+          <td>
+            <span class="status-pill ${p.active ? 'success' : 'danger'}">
+              ${p.active ? 'Active' : 'Disabled'}
+            </span>
+          </td>
+          <td>
+            <div class="action-btns">
+              <a href="/pages/try-on.html?productId=${p.id}" class="btn btn-cyber btn-sm" title="Preview Try-on">AR</a>
+              <a href="/pages/product-details.html?id=${p.id}" class="btn btn-outline btn-sm">Inspect</a>
+              <button onclick="window.smAdminDeleteProduct(${p.id})" class="btn btn-danger btn-sm">Remove</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    window.smAdminDeleteProduct = function(id) {
+      admin.deleteProduct(id);
+    };
+
+    document.getElementById("admin-prod-search").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = allProducts.filter(p => 
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(q))
+      );
+      renderProducts(filtered);
+    });
+
+    loadProducts();
+  </script>
+</body>
+</html>

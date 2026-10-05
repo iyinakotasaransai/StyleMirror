@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Try-On &amp; AI Stylist Studio - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/tryon.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+
+  <!-- Stable Pinned Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- MediaPipe Pose Pinned -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+          <span class="product-brand">AUGMENTED REALITY FIT STUDIO</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">VIRTUAL <span class="cyan-text">TRY-ON &amp; AI STYLIST</span></h1>
+        </div>
+        <a href="/pages/products.html" class="btn btn-outline btn-sm">&larr; Back to Catalog</a>
+      </div>
+
+      <div class="studio-grid">
+        <!-- LEFT: Live Webcam Stage & Canvas Overlay -->
+        <div>
+          <div class="tryon-stage-card">
+            <!-- Hidden Video Feed Stream -->
+            <video id="webcam-video" class="tryon-video" autoplay playsinline muted></video>
+
+            <!-- Mirrored Transparent Overlay Canvas -->
+            <canvas id="tryon-canvas" class="tryon-canvas"></canvas>
+
+            <!-- Stage HUD -->
+            <div class="stage-hud">
+              <div id="tryon-status-indicator" class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="tryon-status-text">INITIALIZING</span>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.triggerRecalibrate()" style="pointer-events: auto;">
+                Recalibrate
+              </button>
+            </div>
+
+            <!-- Landmark Guide Instructions -->
+            <div id="tryon-instructions" class="stage-instructions">
+              Please stand in front of the camera so shoulders and chest are visible.
+            </div>
+
+            <!-- Real-Time Subtitles Banner (Bottom-Center of Stage) -->
+            <div id="tryon-subtitles" class="subtitle-overlay">
+              <p id="tryon-subtitle-text" class="subtitle-text">
+                "Welcome to StyleMirror Atelier. Calibrating garment fit..."
+              </p>
+            </div>
+          </div>
+
+          <!-- Photo Upload Fallback Panel (Visible if camera denied) -->
+          <div id="photo-fallback-panel" class="card" style="margin-top: 18px; display: none; border-color: var(--status-warning);">
+            <h4 style="color: var(--status-warning); margin-bottom: 6px;">Camera Access Fallback</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">
+              Camera permission was not granted. Upload a full-torso photograph to simulate the garment fitting.
+            </p>
+            <input type="file" id="fallback-photo-input" accept="image/*" class="form-input" />
+          </div>
+        </div>
+
+        <!-- RIGHT: Product Selection, 3D Avatar & AI Stylist Panel -->
+        <div class="studio-side-panel">
+          <!-- Active Garment Quick Bar -->
+          <div class="tryon-product-bar">
+            <div>
+              <span id="active-brand" class="product-brand">MIRROR</span>
+              <h3 id="active-product-title" style="font-size: 1.1rem;">Cyberpunk Bomber Jacket</h3>
+              <span id="active-product-price" class="product-price">$149.99</span>
+            </div>
+            <button id="studio-add-cart-btn" class="btn btn-primary btn-sm" onclick="window.addActiveToCart()">
+              Add to Bag
+            </button>
+          </div>
+
+          <!-- 3D Avatar Viewport -->
+          <div class="avatar-viewport-card">
+            <span class="avatar-hud-badge">3D STYLIST AVATAR</span>
+            <div id="avatar-canvas-container"></div>
+          </div>
+
+          <!-- AI Fashion Stylist Recommendation Card -->
+          <div class="ai-recommendation-card">
+            <div class="ai-header">
+              <span class="ai-badge">GEMINI AI FASHION ENGINE</span>
+              <div class="voice-controls">
+                <button type="button" class="btn btn-outline btn-sm" onclick="window.toggleMuteVoice()" id="mute-voice-btn" title="Toggle Voice Audio">
+                  🔊 Audio On
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.replayVoice()" title="Replay Styling Advice">
+                  Replay
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <span id="ai-status-indicator" class="status-pill info">Awaiting Stable Fit</span>
+              <span id="ai-mood-badge" class="status-pill success">Mood: Confident</span>
+            </div>
+
+            <p id="ai-recommendation-text" style="font-size: 0.95rem; line-height: 1.6; color: #fff; margin-bottom: 12px;">
+              Stand in view of the mirror to begin your personalized fit analysis.
+            </p>
+            <p id="ai-reason-text" style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+              Landmarks are currently syncing with 3D model contours...
+            </p>
+
+            <button type="button" class="btn btn-cyber btn-sm" style="width: 100%; margin-top: 16px;" onclick="window.forceAiRecommendation()">
+              Request New Style Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { VirtualTryOnStudio } from "/js/tryon.js";
+    import { AvatarManager } from "/js/avatar.js";
+    import { products } from "/js/products.js";
+    import { cart } from "/js/cart.js";
+    import { ai } from "/js/ai.js";
+    import { voice } from "/js/voice.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    const productId = utils.getQueryParam("productId") || 1;
+    let studio = null;
+    let avatarManager = null;
+    let currentGarment = null;
+
+    async function initStudio() {
+      // 1. Initialize Three.js 3D Avatar
+      avatarManager = new AvatarManager("avatar-canvas-container");
+
+      // 2. Load Product Metadata
+      try {
+        currentGarment = await products.getProductById(productId);
+        if (currentGarment) {
+          document.getElementById("active-brand").textContent = currentGarment.brand;
+          document.getElementById("active-product-title").textContent = currentGarment.name;
+          document.getElementById("active-product-price").textContent = utils.formatCurrency(currentGarment.basePrice);
+        }
+      } catch (err) {
+        console.warn("Product load err:", err);
+      }
+
+      // 3. Initialize Virtual Try-On Studio (MediaPipe Pose + Overlay Canvas)
+      studio = new VirtualTryOnStudio({
+        videoId: "webcam-video",
+        canvasId: "tryon-canvas",
+        productId: productId,
+        avatarManager: avatarManager,
+      });
+
+      // 4. Photo upload fallback listener
+      document.getElementById("fallback-photo-input").addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          studio.handlePhotoUpload(e.target.files[0]);
+        }
+      });
+    }
+
+    window.triggerRecalibrate = function() {
+      if (studio) {
+        studio.stableFramesCount = 0;
+        studio.tryonReadyTriggered = false;
+        studio.updateHudStatus("RECALIBRATING", "Hold still in frame to recalibrate fit...");
+      }
+    };
+
+    window.forceAiRecommendation = function() {
+      if (studio) {
+        studio.triggerAiStyling();
+      }
+    };
+
+    window.toggleMuteVoice = function() {
+      const isMuted = voice.toggleMute();
+      document.getElementById("mute-voice-btn").textContent = isMuted ? "🔇 Muted" : "🔊 Audio On";
+      utils.showToast(isMuted ? "Voice audio muted" : "Voice audio enabled", "info");
+    };
+
+    window.replayVoice = function() {
+      const text = document.getElementById("ai-recommendation-text").textContent;
+      if (text) {
+        voice.speak(
+          text,
+          () => avatarManager && avatarManager.startSpeaking(),
+          () => avatarManager && avatarManager.stopSpeaking()
+        );
+      }
+    };
+
+    window.addActiveToCart = async function() {
+      if (currentGarment && currentGarment.variants && currentGarment.variants.length > 0) {
+        await cart.addToCart(currentGarment.variants[0].id, 1);
+      } else {
+        utils.showToast("Garment variant not selected", "warning");
+      }
+    };
+
+    window.addEventListener("DOMContentLoaded", initStudio);
+  </script>
+</body>
+</html>

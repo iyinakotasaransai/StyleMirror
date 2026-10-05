@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Garment Catalog - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">CATALOG INVENTORY</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">MANAGE <span class="gold-text">GARMENTS</span></h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm">+ Add New Garment</a>
+          <a href="/pages/seller/dashboard.html" class="btn btn-outline btn-sm">&larr; Studio Dashboard</a>
+        </div>
+      </div>
+
+      <div class="data-table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Garment Name</th>
+              <th>Brand</th>
+              <th>Category</th>
+              <th>Base Price</th>
+              <th>Variants</th>
+              <th>AR Overlay</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="seller-products-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { seller } from "/js/seller.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function loadProducts() {
+      if (!auth.protectPage("SELLER")) return;
+
+      const tbody = document.getElementById("seller-products-tbody");
+      try {
+        const list = await seller.getProducts();
+
+        if (list.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                No garments found in your catalog. Click '+ Add New Garment' to create your first item.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = list.map(p => `
+          <tr>
+            <td>
+              <div style="font-weight: 600;">${p.name}</div>
+              <span style="font-size: 0.78rem; color: var(--text-dim);">ID: ${p.id}</span>
+            </td>
+            <td>${p.brand}</td>
+            <td>${p.categoryName || "Uncategorized"}</td>
+            <td style="font-weight: 700; color: var(--accent-gold);">${utils.formatCurrency(p.basePrice)}</td>
+            <td>${p.variants ? p.variants.length : 0} configured</td>
+            <td>
+              ${p.tryOnAsset && p.tryOnAsset.enabled ? `<span class="status-pill success">AR Active</span>` : `<span class="status-pill warning">None</span>`}
+            </td>
+            <td>
+              <span class="status-pill ${p.active ? 'success' : 'danger'}">
+                ${p.active ? 'Active' : 'Disabled'}
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <a href="/pages/try-on.html?productId=${p.id}" class="btn btn-cyber btn-sm" title="Preview Live AR Try-on">
+                  Preview AR
+                </a>
+                <a href="/pages/seller/product-form.html?id=${p.id}" class="btn btn-secondary btn-sm">
+                  Edit
+                </a>
+                <button onclick="window.smDeleteProduct(${p.id})" class="btn btn-danger btn-sm">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    window.smDeleteProduct = function(id) {
+      seller.deleteProduct(id);
+    };
+
+    loadProducts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Checkout - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/ecommerce.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="margin-bottom: 32px;">
+        <span class="product-brand">FINAL ORDER STEP</span>
+        <h1 class="display-title" style="font-size: 2.2rem;">SECURE <span class="gold-text">CHECKOUT</span></h1>
+      </div>
+
+      <div class="checkout-grid">
+        <!-- Left: Shipping & Simulated Payment Options -->
+        <div class="card">
+          <h3 style="font-size: 1.25rem; margin-bottom: 20px;">1. Delivery Destination</h3>
+          <form id="checkout-form">
+            <div class="form-group">
+              <label class="form-label">Full Shipping Address</label>
+              <textarea id="ship-address" class="form-textarea" rows="3" placeholder="Street, Suite/Apartment, City, State, Postal Code" required>120 Fashion Avenue, Suite 4B, New York, NY 10018</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Contact Phone Number</label>
+              <input type="text" id="ship-phone" class="form-input" placeholder="+1-555-0100" value="+1-555-0102" required />
+            </div>
+
+            <h3 style="font-size: 1.25rem; margin: 32px 0 16px;">2. Payment Method (Simulated Gateway)</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px;">
+              <label style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border-active); border-radius: var(--radius-md); cursor: pointer;">
+                <input type="radio" name="payment-method" value="SIMULATED_CREDIT_CARD" checked />
+                <div>
+                  <strong style="color: #fff; display: block;">Demo High-Limit Card</strong>
+                  <span style="font-size: 0.8rem; color: var(--text-dim);">Instant simulated authorization &bull; Zero real charge</span>
+                </div>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); cursor: pointer;">
+                <input type="radio" name="payment-method" value="SIMULATED_UPI" />
+                <div>
+                  <strong style="color: #fff; display: block;">Demo UPI / Digital Wallet</strong>
+                  <span style="font-size: 0.8rem; color: var(--text-dim);">Simulated virtual payment address</span>
+                </div>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); cursor: pointer;">
+                <input type="radio" name="payment-method" value="COD" />
+                <div>
+                  <strong style="color: #fff; display: block;">Cash on Delivery (COD)</strong>
+                  <span style="font-size: 0.8rem; color: var(--text-dim);">Verify upon physical receipt</span>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg" style="width: 100%;">
+              Confirm &amp; Place Order
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Order Summary Breakdown -->
+        <div class="order-summary-card" id="checkout-summary-box">
+          <div class="loading-spinner"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { cart } from "/js/cart.js";
+    import { orders } from "/js/orders.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let activeCart = null;
+
+    async function initCheckout() {
+      if (!auth.isLoggedIn()) {
+        window.location.href = "/pages/login.html";
+        return;
+      }
+
+      activeCart = await cart.getCart();
+      const summaryBox = document.getElementById("checkout-summary-box");
+
+      if (!activeCart || !activeCart.items || activeCart.items.length === 0) {
+        summaryBox.innerHTML = `<div class="empty-state">Shopping bag is empty.</div>`;
+        document.getElementById("place-order-btn").disabled = true;
+        return;
+      }
+
+      summaryBox.innerHTML = `
+        <h3 style="font-size: 1.2rem; margin-bottom: 20px;">Review Order (${activeCart.totalItems} Items)</h3>
+        <div style="max-height: 240px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+          ${activeCart.items.map(item => `
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+              <div>
+                <strong>${item.productName}</strong>
+                <div style="font-size: 0.78rem; color: var(--text-dim);">${item.size} / ${item.color} &times; ${item.quantity}</div>
+              </div>
+              <span>${utils.formatCurrency(item.subtotal)}</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>${utils.formatCurrency(activeCart.subtotal)}</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax (8%)</span>
+          <span>${utils.formatCurrency(activeCart.estimatedTax)}</span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span>${activeCart.shippingFee > 0 ? utils.formatCurrency(activeCart.shippingFee) : "FREE"}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span>
+          <span class="gold-text">${utils.formatCurrency(activeCart.grandTotal)}</span>
+        </div>
+      `;
+    }
+
+    document.getElementById("checkout-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("place-order-btn");
+      btn.disabled = true;
+      btn.textContent = "Processing Transaction...";
+
+      const address = document.getElementById("ship-address").value;
+      const phone = document.getElementById("ship-phone").value;
+      const method = document.querySelector('input[name="payment-method"]:checked').value;
+
+      try {
+        const order = await orders.checkout(address, phone, method);
+        utils.showToast(`Order #${order.orderNumber} placed successfully!`, "success");
+        setTimeout(() => {
+          window.location.href = `/pages/order-details.html?id=${order.id}`;
+        }, 1000);
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = "Confirm & Place Order";
+      }
+    });
+
+    initCheckout();
+  </script>
+</body>
+</html>

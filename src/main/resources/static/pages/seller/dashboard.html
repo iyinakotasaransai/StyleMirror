@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Studio Dashboard - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand" id="seller-store-badge">SELLER ATELIER</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">SELLER <span class="gold-text">DASHBOARD</span></h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/pages/seller/product-form.html" class="btn btn-primary btn-sm">+ Add New Garment</a>
+          <a href="/pages/seller/products.html" class="btn btn-secondary btn-sm">Manage Products</a>
+          <a href="/pages/seller/orders.html" class="btn btn-outline btn-sm">Fulfill Orders</a>
+        </div>
+      </div>
+
+      <!-- Key Metrics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-meta">
+            <span class="stat-label">Total Garments</span>
+            <span class="stat-value" id="stat-total-products">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon cyan">✨</div>
+          <div class="stat-meta">
+            <span class="stat-label">Active Listed</span>
+            <span class="stat-value" id="stat-active-products">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📦</div>
+          <div class="stat-meta">
+            <span class="stat-label">Orders Received</span>
+            <span class="stat-value" id="stat-total-orders">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-meta">
+            <span class="stat-label">Gross Boutique Sales</span>
+            <span class="stat-value" id="stat-total-sales">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Stock Warnings Table -->
+      <div class="data-table-card">
+        <div class="table-toolbar">
+          <h3 style="font-size: 1.15rem;">Low Inventory &amp; Stock Replenishment Warnings (&le; 15 units)</h3>
+          <span class="status-pill warning" id="low-stock-count-badge">0 items</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Variant (Size / Color)</th>
+              <th>Unit Price</th>
+              <th>Remaining Stock</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="low-stock-table-body">
+            <tr>
+              <td colspan="5" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { seller } from "/js/seller.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function initDashboard() {
+      if (!auth.protectPage("SELLER")) return;
+
+      const data = await seller.getDashboard();
+      if (!data) return;
+
+      document.getElementById("seller-store-badge").textContent = `${data.storeName} (${data.approvalStatus})`;
+      document.getElementById("stat-total-products").textContent = data.totalProducts;
+      document.getElementById("stat-active-products").textContent = data.activeProducts;
+      document.getElementById("stat-total-orders").textContent = data.totalOrders;
+      document.getElementById("stat-total-sales").textContent = utils.formatCurrency(data.totalSales);
+
+      const lowStockTbody = document.getElementById("low-stock-table-body");
+      const lowStockBadge = document.getElementById("low-stock-count-badge");
+      const lowList = data.lowStockProducts || [];
+
+      lowStockBadge.textContent = `${lowList.length} alert${lowList.length === 1 ? "" : "s"}`;
+
+      if (lowList.length === 0) {
+        lowStockTbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              All inventory levels are healthy. No items below threshold.
+            </td>
+          </tr>
+        `;
+      } else {
+        lowStockTbody.innerHTML = lowList.map(v => `
+          <tr>
+            <td><code>${v.sku}</code></td>
+            <td>Size: ${v.size} | Color: ${v.color}</td>
+            <td>${utils.formatCurrency(v.price)}</td>
+            <td style="font-weight: 700; color: #ef4444;">${v.stock} units</td>
+            <td><span class="status-pill danger">Critical Stock</span></td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    initDashboard();
+  </script>
+</body>
+</html>

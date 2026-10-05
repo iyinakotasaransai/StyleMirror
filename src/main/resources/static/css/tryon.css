@@ -1,0 +1,213 @@
+/* ==============================================================
+   StyleMirror - Virtual Try-On & 3D Avatar Studio Styles
+   MediaPipe Camera Overlay, Three.js HUD, AI Subtitles
+   ============================================================== */
+
+.studio-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* Left: Live Try-On Camera Stage */
+.tryon-stage-card {
+  background: #000;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 4/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.tryon-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror camera feed */
+}
+
+.tryon-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1); /* Mirror canvas to align with mirrored camera */
+}
+
+/* HUD Overlay Badges & Controls */
+.stage-hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.stage-hud > * {
+  pointer-events: auto;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(10, 12, 16, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.status-indicator.ready .status-dot {
+  background: var(--status-success);
+  box-shadow: 0 0 10px var(--status-success);
+}
+
+.status-indicator.ready {
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
+.stage-instructions {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 12, 16, 0.85);
+  backdrop-filter: blur(12px);
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+  color: var(--text-main);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Subtitles Container - Centered at Bottom of Camera Stage */
+.subtitle-overlay {
+  position: absolute;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: rgba(10, 12, 16, 0.9);
+  border: 1px solid var(--accent-gold);
+  backdrop-filter: blur(12px);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  box-shadow: var(--shadow-glow);
+  display: none;
+  animation: fadeIn 0.2s ease;
+  z-index: 50;
+}
+
+.subtitle-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Right: Avatar, Controls & AI Stylist Panel */
+.studio-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.avatar-viewport-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  height: 240px;
+  position: relative;
+}
+
+#avatar-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-hud-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(18, 21, 28, 0.7);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.ai-recommendation-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: relative;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.voice-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.tryon-product-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="jacket" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a303c"/>
+      <stop offset="50%" stop-color="#1f242d"/>
+      <stop offset="100%" stop-color="#12151b"/>
+    </linearGradient>
+    <linearGradient id="goldAcc" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#ff8a00"/>
+    </linearGradient>
+    <linearGradient id="cyberAcc" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00e5ff"/>
+      <stop offset="100%" stop-color="#9d4edd"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  
+  <!-- Cyberpunk Bomber Jacket Illustration -->
+  <path d="M140,80 L260,80 L330,140 L380,240 L330,260 L280,200 L280,380 L120,380 L120,200 L70,260 L20,240 L70,140 Z" fill="url(#jacket)" stroke="#3a4252" stroke-width="3"/>
+  <!-- Articulated Sleeves -->
+  <line x1="80" y1="160" x2="30" y2="230" stroke="#00e5ff" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>
+  <line x1="320" y1="160" x2="370" y2="230" stroke="#00e5ff" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>
+  <!-- Collar -->
+  <path d="M150,80 Q200,120 250,80 L230,130 Q200,140 170,130 Z" fill="#181c24" stroke="url(#goldAcc)" stroke-width="2"/>
+  <!-- Front Zipper -->
+  <line x1="200" y1="135" x2="200" y2="380" stroke="url(#goldAcc)" stroke-width="3"/>
+  <!-- Tactical Pocket -->
+  <rect x="135" y="210" width="50" height="60" rx="4" fill="#181c24" stroke="#404b5c" stroke-width="2"/>
+  <line x1="145" y1="225" x2="175" y2="225" stroke="#00e5ff" stroke-width="2"/>
+  <!-- Ribbed Waist Hem -->
+  <rect x="120" y="370" width="160" height="25" fill="#181c24" stroke="#3a4252" stroke-width="2"/>
+  <!-- Neomodern Badge -->
+  <circle cx="250" cy="190" r="14" fill="#00e5ff" opacity="0.2"/>
+  <circle cx="250" cy="190" r="10" fill="url(#cyberAcc)"/>
+  <text x="200" y="450" fill="#d4af37" font-family="'Cinzel', serif" font-size="16" letter-spacing="4" text-anchor="middle">NEO-AURA TECHWEAR</text>
+</svg>

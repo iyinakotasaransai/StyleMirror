@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container" style="max-width: 800px;">
+      <div style="margin-bottom: 32px;">
+        <span class="product-brand">ACCOUNT PROFILE</span>
+        <h1 class="display-title" style="font-size: 2.2rem;">MY <span class="gold-text">PROFILE</span></h1>
+      </div>
+
+      <div class="card" id="profile-card">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { auth } from "/js/auth.js";
+    import { api } from "/js/api.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function loadProfile() {
+      const container = document.getElementById("profile-card");
+
+      if (!auth.isLoggedIn()) {
+        window.location.href = "/pages/login.html";
+        return;
+      }
+
+      try {
+        const res = await api.get("/auth/me");
+        const u = res.data;
+
+        container.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-subtle);">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--accent-gradient); color: var(--text-inverse); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800;">
+              ${u.fullName ? u.fullName.charAt(0) : "U"}
+            </div>
+            <div>
+              <h2 style="font-size: 1.6rem; margin-bottom: 4px;">${u.fullName}</h2>
+              <span style="color: var(--text-muted); font-size: 0.95rem;">${u.email}</span>
+              <div style="margin-top: 8px; display: flex; gap: 8px;">
+                ${u.roles.map(r => `<span class="status-pill info">${r.replace('ROLE_', '')}</span>`).join("")}
+                ${u.sellerStatus ? `<span class="status-pill success">Store: ${u.sellerStatus}</span>` : ""}
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.92rem; margin-bottom: 32px;">
+            <div><strong>Registered Phone:</strong> <span style="color: var(--text-muted);">${u.phone || "Not configured"}</span></div>
+            <div><strong>Account Status:</strong> <span class="status-pill success">${u.active ? "Active" : "Disabled"}</span></div>
+            <div><strong>Registered Date:</strong> <span style="color: var(--text-muted);">${utils.formatDate(u.createdAt)}</span></div>
+            <div><strong>Security Mode:</strong> <span style="color: var(--accent-cyan);">BCrypt + JWT Auth</span></div>
+          </div>
+
+          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+            <a href="/pages/orders.html" class="btn btn-primary btn-sm">My Orders</a>
+            <a href="/pages/wishlist.html" class="btn btn-secondary btn-sm">My Wishlist</a>
+            ${auth.hasRole("SELLER") ? `<a href="/pages/seller/dashboard.html" class="btn btn-outline btn-sm">Seller Studio</a>` : ""}
+            ${auth.hasRole("ADMIN") ? `<a href="/pages/admin/dashboard.html" class="btn btn-cyber btn-sm">Admin Portal</a>` : ""}
+            <button onclick="window.smLogout()" class="btn btn-danger btn-sm">Log Out</button>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

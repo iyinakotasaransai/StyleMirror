@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="blazer" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e2638"/>
+      <stop offset="100%" stop-color="#0f1420"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <!-- Italian Wool Tailored Blazer -->
+  <path d="M130,80 L270,80 L330,140 L380,260 L330,270 L285,210 L285,410 L115,410 L115,210 L70,270 L20,260 L70,140 Z" fill="url(#blazer)" stroke="#2d374d" stroke-width="2"/>
+  <!-- Peak Lapels -->
+  <polygon points="160,80 200,240 170,210 130,120" fill="#252f45" stroke="#d4af37" stroke-width="1.5"/>
+  <polygon points="240,80 200,240 230,210 270,120" fill="#252f45" stroke="#d4af37" stroke-width="1.5"/>
+  <!-- Two Horn Buttons -->
+  <circle cx="202" cy="270" r="4" fill="#d4af37"/>
+  <circle cx="202" cy="320" r="4" fill="#d4af37"/>
+  <!-- Breast Welt Pocket -->
+  <line x1="145" y1="180" x2="175" y2="175" stroke="#d4af37" stroke-width="2"/>
+  <text x="200" y="460" fill="#d4af37" font-family="'Cinzel', serif" font-size="16" letter-spacing="4" text-anchor="middle">SARTORIA MILANO SLIM BLAZER</text>
+</svg>

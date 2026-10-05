@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Intelligence &amp; Analytics Reports - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    .distribution-row {
+      margin-bottom: 16px;
+    }
+    .distribution-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    .distribution-bar-bg {
+      background: rgba(255, 255, 255, 0.08);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .distribution-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">EXECUTIVE INTELLIGENCE</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">SYSTEM <span class="gold-text">REPORTS</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a href="/pages/admin/dashboard.html" class="btn btn-outline btn-sm">&larr; Admin Suite</a>
+          <button onclick="window.print()" class="btn btn-secondary btn-sm">🖨️ Print Report</button>
+        </div>
+      </div>
+
+      <!-- Core Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-meta">
+            <span class="stat-label">Gross Platform Revenue</span>
+            <span class="stat-value" id="rep-gross-revenue">$0.00</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📦</div>
+          <div class="stat-meta">
+            <span class="stat-label">Fulfilled Orders</span>
+            <span class="stat-value" id="rep-total-sales">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon cyan">🔮</div>
+          <div class="stat-meta">
+            <span class="stat-label">Live AR Try-On Sessions</span>
+            <span class="stat-value" id="rep-tryon-sessions">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✨</div>
+          <div class="stat-meta">
+            <span class="stat-label">Gemini AI Stylist Consultations</span>
+            <span class="stat-value" id="rep-ai-consults">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Grids -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        <!-- Order Pipeline Status Breakdown -->
+        <div class="data-table-card">
+          <div class="table-toolbar">
+            <h3 style="font-size: 1.15rem;">Order Lifecycle Distribution</h3>
+          </div>
+          <div id="order-status-dist" style="padding: 20px;">
+            <div style="text-align: center;"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Catalog Taxonomy Distribution -->
+        <div class="data-table-card">
+          <div class="table-toolbar">
+            <h3 style="font-size: 1.15rem;">Catalog Volume by Taxonomy Category</h3>
+          </div>
+          <div id="cat-volume-dist" style="padding: 20px;">
+            <div style="text-align: center;"><div class="loading-spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI & Virtual Try-On Technology Performance -->
+      <div class="data-table-card">
+        <div class="table-toolbar">
+          <h3 style="font-size: 1.15rem;">AR Fitting &amp; AI Integration Telemetry</h3>
+        </div>
+        <div style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px;">
+            <div style="font-weight: 700; color: var(--accent-gold); margin-bottom: 8px;">📷 MediaPipe Pose Pipeline</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px;">
+              Stable 33-landmark skeleton extraction running on client GPU canvas. Exponential Moving Average (EMA) smoothing active (alpha=0.25).
+            </p>
+            <span class="status-pill success" style="font-size: 0.72rem;">Operational &bull; 60 FPS</span>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px;">
+            <div style="font-weight: 700; color: #06b6d4; margin-bottom: 8px;">🎭 Three.js Procedural Avatar</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px;">
+              Real-time procedural mannequin with interactive gesture rigs: Idle, Nod, Thinking, Wave, and Speech Jaw synchronizer.
+            </p>
+            <span class="status-pill cyan" style="font-size: 0.72rem;">Operational &bull; WebGL 2.0</span>
+          </div>
+
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px;">
+            <div style="font-weight: 700; color: #a855f7; margin-bottom: 8px;">✨ Google Gemini 2.5 Flash</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px;">
+              Backend guarded AI fashion recommendations with in-memory response caching, rate limiting (10 req/min/user), and deterministic fallback.
+            </p>
+            <span class="status-pill purple" style="font-size: 0.72rem;">Operational &bull; Protected Proxy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function loadReports() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      try {
+        const rep = await admin.getReports();
+        if (!rep) return;
+
+        document.getElementById("rep-gross-revenue").textContent = utils.formatCurrency(rep.grossRevenue);
+        document.getElementById("rep-total-sales").textContent = rep.totalSalesCount;
+        document.getElementById("rep-tryon-sessions").textContent = rep.totalTryOnSessions;
+        document.getElementById("rep-ai-consults").textContent = rep.totalAiRecommendations;
+
+        // Render Order Status Distribution
+        renderDistribution(
+          document.getElementById("order-status-dist"),
+          rep.ordersByStatus || {},
+          "var(--accent-gold)"
+        );
+
+        // Render Category Taxonomy Volume
+        renderDistribution(
+          document.getElementById("cat-volume-dist"),
+          rep.productsByCategory || {},
+          "#06b6d4"
+        );
+      } catch (err) {
+        console.error("Failed to load reports:", err);
+      }
+    }
+
+    function renderDistribution(container, dataMap, color) {
+      const keys = Object.keys(dataMap);
+      if (keys.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;">No telemetry records available.</div>`;
+        return;
+      }
+
+      const total = keys.reduce((acc, k) => acc + dataMap[k], 0);
+
+      container.innerHTML = keys.map(k => {
+        const val = dataMap[k];
+        const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+        return `
+          <div class="distribution-row">
+            <div class="distribution-header">
+              <span><strong>${k}</strong></span>
+              <span>${val} (${pct}%)</span>
+            </div>
+            <div class="distribution-bar-bg">
+              <div class="distribution-bar-fill" style="width: ${pct}%; background: ${color};"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>

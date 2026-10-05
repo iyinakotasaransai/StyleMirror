@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="dress" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d132c"/>
+      <stop offset="50%" stop-color="#801336"/>
+      <stop offset="100%" stop-color="#c72c41"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <!-- Elegant Evening Velvet Dress -->
+  <path d="M165,90 L235,90 L260,150 L230,220 L300,420 L100,420 L170,220 L140,150 Z" fill="url(#dress)" stroke="#ee4540" stroke-width="2"/>
+  <path d="M165,90 Q200,160 235,90 Z" fill="#141822"/>
+  <line x1="170" y1="220" x2="230" y2="220" stroke="#d4af37" stroke-width="4"/>
+  <text x="200" y="460" fill="#d4af37" font-family="'Cinzel', serif" font-size="16" letter-spacing="4" text-anchor="middle">LUMIÈRE PARIS HAUTE COUTURE</text>
+</svg>

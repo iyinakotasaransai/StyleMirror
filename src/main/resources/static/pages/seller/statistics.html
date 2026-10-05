@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Analytics &amp; Statistics - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand" id="stat-boutique-title">ATELIER ANALYTICS</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">SALES <span class="gold-text">PERFORMANCE</span></h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/pages/seller/dashboard.html" class="btn btn-outline btn-sm">&larr; Studio Dashboard</a>
+          <a href="/pages/seller/orders.html" class="btn btn-secondary btn-sm">View Orders</a>
+        </div>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-meta">
+            <span class="stat-label">Lifetime Revenue</span>
+            <span class="stat-value" id="kpi-revenue">$0.00</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">📦</div>
+          <div class="stat-meta">
+            <span class="stat-label">Total Orders Processed</span>
+            <span class="stat-value" id="kpi-orders">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon cyan">📊</div>
+          <div class="stat-meta">
+            <span class="stat-label">Avg Order Value (AOV)</span>
+            <span class="stat-value" id="kpi-aov">$0.00</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-meta">
+            <span class="stat-label">Active Garments</span>
+            <span class="stat-value" id="kpi-active-products">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Breakdowns -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <div class="data-table-card">
+          <div class="table-toolbar">
+            <h3 style="font-size: 1.15rem;">Boutique Store Credentials</h3>
+          </div>
+          <div style="padding: 20px; font-size: 0.95rem; line-height: 1.8;">
+            <div><strong>Store Name:</strong> <span id="info-store-name" style="color: var(--accent-gold);">-</span></div>
+            <div><strong>Store Status:</strong> <span id="info-status" class="status-pill success">APPROVED</span></div>
+            <div><strong>Address:</strong> <span id="info-address" style="color: var(--text-muted);">-</span></div>
+            <div><strong>GST / Tax ID:</strong> <span id="info-gst" style="font-family: monospace;">-</span></div>
+          </div>
+        </div>
+
+        <div class="data-table-card">
+          <div class="table-toolbar">
+            <h3 style="font-size: 1.15rem;">Stock Health Ratio</h3>
+          </div>
+          <div style="padding: 20px;">
+            <div style="margin-bottom: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span>Total Catalog Listings</span>
+                <strong id="bar-total-listings">0</strong>
+              </div>
+              <div style="background: rgba(255,255,255,0.08); height: 8px; border-radius: 4px; overflow: hidden;">
+                <div id="bar-active-fill" style="background: var(--accent-gold); height: 100%; width: 0%;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span>Low Inventory Skus</span>
+                <strong id="bar-low-stock-count" style="color: #ef4444;">0</strong>
+              </div>
+              <div style="background: rgba(255,255,255,0.08); height: 8px; border-radius: 4px; overflow: hidden;">
+                <div id="bar-low-fill" style="background: #ef4444; height: 100%; width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical Stock Alert List -->
+      <div class="data-table-card">
+        <div class="table-toolbar">
+          <h3 style="font-size: 1.15rem;">Inventory Attention Needed</h3>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Variant (Size / Color)</th>
+              <th>Unit Price</th>
+              <th>Available Units</th>
+              <th>Health</th>
+            </tr>
+          </thead>
+          <tbody id="stat-stock-tbody">
+            <tr>
+              <td colspan="5" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { seller } from "/js/seller.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function loadStats() {
+      if (!auth.protectPage("SELLER")) return;
+
+      try {
+        const data = await seller.getDashboard();
+        if (!data) return;
+
+        document.getElementById("stat-boutique-title").textContent = `${data.storeName.toUpperCase()} PERFORMANCE`;
+        document.getElementById("kpi-revenue").textContent = utils.formatCurrency(data.totalSales);
+        document.getElementById("kpi-orders").textContent = data.totalOrders;
+        
+        const aov = data.totalOrders > 0 ? (data.totalSales / data.totalOrders) : 0;
+        document.getElementById("kpi-aov").textContent = utils.formatCurrency(aov);
+        document.getElementById("kpi-active-products").textContent = `${data.activeProducts} / ${data.totalProducts}`;
+
+        document.getElementById("info-store-name").textContent = data.storeName;
+        document.getElementById("info-status").textContent = data.approvalStatus;
+        document.getElementById("info-address").textContent = data.businessAddress || "Online Atelier";
+        document.getElementById("info-gst").textContent = data.gstNumber || "N/A";
+
+        document.getElementById("bar-total-listings").textContent = data.totalProducts;
+        document.getElementById("bar-active-fill").style.width = data.totalProducts > 0 
+          ? `${Math.round((data.activeProducts / data.totalProducts) * 100)}%` 
+          : "0%";
+
+        const lowList = data.lowStockProducts || [];
+        document.getElementById("bar-low-stock-count").textContent = `${lowList.length} items`;
+        document.getElementById("bar-low-fill").style.width = `${Math.min(100, lowList.length * 15)}%`;
+
+        const tbody = document.getElementById("stat-stock-tbody");
+        if (lowList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">All boutique variants maintain optimal stock buffers.</td></tr>`;
+        } else {
+          tbody.innerHTML = lowList.map(v => `
+            <tr>
+              <td><code>${v.sku}</code></td>
+              <td>${v.size} / ${v.color}</td>
+              <td>${utils.formatCurrency(v.price)}</td>
+              <td style="font-weight: 700; color: #ef4444;">${v.stock}</td>
+              <td><span class="status-pill danger">Replenish</span></td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) {
+        console.error("Error loading stats:", err);
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

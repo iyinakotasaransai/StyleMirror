@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - StyleMirror Luxury Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="auth-wrapper">
+      <div class="auth-card" style="max-width: 520px;">
+        <div class="auth-header">
+          <h2 class="auth-title display-title">CREATE <span class="gold-text">ACCOUNT</span></h2>
+          <p class="auth-subtitle">Join the premier augmented fashion network</p>
+        </div>
+
+        <div class="role-tabs">
+          <button type="button" class="role-tab-btn active" id="tab-buyer" onclick="setRole('BUYER')">Buyer Account</button>
+          <button type="button" class="role-tab-btn" id="tab-seller" onclick="setRole('SELLER')">Boutique Seller</button>
+        </div>
+
+        <form id="register-form">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="reg-name" class="form-input" placeholder="e.g. Elena Vance" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="reg-email" class="form-input" placeholder="elena@atelier.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password (min 6 characters)</label>
+            <input type="password" id="reg-password" class="form-input" placeholder="••••••••" minlength="6" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone (Optional)</label>
+            <input type="text" id="reg-phone" class="form-input" placeholder="+1-555-0199" />
+          </div>
+
+          <!-- Dynamic Seller Profile Fields -->
+          <div id="seller-extra-fields" class="seller-fields">
+            <h4 style="font-size: 0.95rem; margin-bottom: 14px; color: var(--accent-gold);">Boutique Store Information</h4>
+            <div class="form-group">
+              <label class="form-label">Store / Atelier Name</label>
+              <input type="text" id="reg-store-name" class="form-input" placeholder="e.g. Vance Maison" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Business Address</label>
+              <input type="text" id="reg-business-address" class="form-input" placeholder="e.g. 500 Madison Ave, New York" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">GST / Tax Identification Number</label>
+              <input type="text" id="reg-gst" class="form-input" placeholder="e.g. GST-NY-882910" />
+            </div>
+          </div>
+
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 14px;">
+            Complete Registration
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Already registered? <a href="/pages/login.html">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let selectedRole = "BUYER";
+
+    window.setRole = function(role) {
+      selectedRole = role;
+      document.getElementById("tab-buyer").classList.toggle("active", role === "BUYER");
+      document.getElementById("tab-seller").classList.toggle("active", role === "SELLER");
+      const sellerFields = document.getElementById("seller-extra-fields");
+      if (role === "SELLER") {
+        sellerFields.classList.add("active");
+      } else {
+        sellerFields.classList.remove("active");
+      }
+    };
+
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("reg-submit-btn");
+      btn.disabled = true;
+      btn.textContent = "Creating Account...";
+
+      const payload = {
+        fullName: document.getElementById("reg-name").value,
+        email: document.getElementById("reg-email").value,
+        password: document.getElementById("reg-password").value,
+        phone: document.getElementById("reg-phone").value,
+        role: selectedRole,
+        storeName: document.getElementById("reg-store-name") ? document.getElementById("reg-store-name").value : null,
+        businessAddress: document.getElementById("reg-business-address") ? document.getElementById("reg-business-address").value : null,
+        gstNumber: document.getElementById("reg-gst") ? document.getElementById("reg-gst").value : null,
+      };
+
+      try {
+        const user = await auth.register(payload);
+        utils.showToast("Account created successfully!", "success");
+
+        setTimeout(() => {
+          if (selectedRole === "SELLER") {
+            window.location.href = "/pages/seller/dashboard.html";
+          } else {
+            window.location.href = "/pages/products.html";
+          }
+        }, 800);
+      } catch (err) {
+        utils.showToast(err.message, "error");
+        btn.disabled = false;
+        btn.textContent = "Complete Registration";
+      }
+    });
+  </script>
+</body>
+</html>

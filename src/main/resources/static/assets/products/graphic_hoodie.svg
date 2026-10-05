@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="hoodie" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <!-- Oversized Streetwear Hoodie -->
+  <path d="M120,90 L280,90 L340,160 L380,270 L320,285 L285,220 L285,390 L115,390 L115,220 L80,285 L20,270 L60,160 Z" fill="url(#hoodie)" stroke="#475569" stroke-width="2"/>
+  <path d="M150,90 Q200,60 250,90 Q200,120 150,90 Z" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+  <!-- Front Kangaroo Pocket -->
+  <path d="M140,290 L260,290 L275,360 L125,360 Z" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <!-- Graphic Chest Print -->
+  <text x="200" y="210" fill="#00e5ff" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="900" letter-spacing="3" text-anchor="middle">STREETPULSE</text>
+  <text x="200" y="235" fill="#9d4edd" font-family="'JetBrains Mono', monospace" font-size="12" letter-spacing="6" text-anchor="middle">OSAKA 2026</text>
+  <text x="200" y="450" fill="#d4af37" font-family="'Cinzel', serif" font-size="16" letter-spacing="4" text-anchor="middle">STREETPULSE OVERSIZED HOODIE</text>
+</svg>

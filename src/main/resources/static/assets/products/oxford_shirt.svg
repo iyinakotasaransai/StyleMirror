@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141822"/>
+      <stop offset="100%" stop-color="#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <path d="M140,90 L260,90 L320,150 L370,250 L320,265 L275,210 L275,400 L125,400 L125,210 L80,265 L30,250 L80,150 Z" fill="url(#shirt)" stroke="#cbd5e1" stroke-width="2"/>
+  <polygon points="160,90 200,135 170,145 130,95" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <polygon points="240,90 200,135 230,145 270,95" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="200" y1="135" x2="200" y2="400" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="200" cy="170" r="3" fill="#64748b"/>
+  <circle cx="200" cy="220" r="3" fill="#64748b"/>
+  <circle cx="200" cy="270" r="3" fill="#64748b"/>
+  <circle cx="200" cy="320" r="3" fill="#64748b"/>
+  <circle cx="200" cy="370" r="3" fill="#64748b"/>
+  <path d="M145,180 L180,180 L180,225 L145,225 Z" fill="none" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="200" y="450" fill="#d4af37" font-family="'Cinzel', serif" font-size="16" letter-spacing="4" text-anchor="middle">MIRROR ATELIER OXFORD</text>
+</svg>

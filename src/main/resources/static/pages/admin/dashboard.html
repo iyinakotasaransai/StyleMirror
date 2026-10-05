@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Admin Console - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <span class="product-brand">SYSTEM GOVERNANCE</span>
+          <h1 class="display-title" style="font-size: 2.2rem;">ADMIN <span class="gold-text">CONTROL SUITE</span></h1>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="/pages/admin/users.html" class="btn btn-outline btn-sm">Users</a>
+          <a href="/pages/admin/sellers.html" class="btn btn-outline btn-sm">Sellers</a>
+          <a href="/pages/admin/categories.html" class="btn btn-outline btn-sm">Categories</a>
+          <a href="/pages/admin/products.html" class="btn btn-outline btn-sm">Catalog</a>
+          <a href="/pages/admin/orders.html" class="btn btn-outline btn-sm">Orders</a>
+          <a href="/pages/admin/reports.html" class="btn btn-primary btn-sm">📊 Analytics</a>
+        </div>
+      </div>
+
+      <!-- Key Performance Metrics Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-meta">
+            <span class="stat-label">Total Registered Users</span>
+            <span class="stat-value" id="adm-total-users">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">🏪</div>
+          <div class="stat-meta">
+            <span class="stat-label">Merchant Sellers</span>
+            <span class="stat-value" id="adm-total-sellers">0</span>
+            <small id="adm-pending-sellers" style="color: #f59e0b; font-weight: 600; font-size: 0.8rem;"></small>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon cyan">👗</div>
+          <div class="stat-meta">
+            <span class="stat-label">Platform Garments</span>
+            <span class="stat-value" id="adm-total-products">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">💎</div>
+          <div class="stat-meta">
+            <span class="stat-label">Gross Platform Revenue</span>
+            <span class="stat-value" id="adm-total-revenue">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Bar -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <a href="/pages/admin/sellers.html" class="stat-card" style="text-decoration: none; border-color: rgba(212,175,55,0.3); transition: transform 0.2s;">
+          <div style="font-weight: 700; color: var(--accent-gold); margin-bottom: 4px;">⚡ Moderate Sellers</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Review pending applications and manage store approvals.</div>
+        </a>
+        <a href="/pages/admin/categories.html" class="stat-card" style="text-decoration: none; border-color: rgba(6,182,212,0.3); transition: transform 0.2s;">
+          <div style="font-weight: 700; color: #06b6d4; margin-bottom: 4px;">📂 Taxonomy Categories</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Create, organize, and activate fashion apparel categories.</div>
+        </a>
+        <a href="/pages/admin/reports.html" class="stat-card" style="text-decoration: none; border-color: rgba(168,85,247,0.3); transition: transform 0.2s;">
+          <div style="font-weight: 700; color: #a855f7; margin-bottom: 4px;">📈 Intelligence Reports</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Inspect AR try-on analytics &amp; Gemini AI recommendations.</div>
+        </a>
+      </div>
+
+      <!-- Recent System Orders -->
+      <div class="data-table-card">
+        <div class="table-toolbar">
+          <h3 style="font-size: 1.15rem;">Recent Platform Orders</h3>
+          <a href="/pages/admin/orders.html" class="btn btn-outline btn-sm">View All Orders &rarr;</a>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Placed By</th>
+              <th>Date</th>
+              <th>Items</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adm-recent-orders-tbody">
+            <tr>
+              <td colspan="7" style="text-align: center;"><div class="loading-spinner"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { admin } from "/js/admin.js";
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    async function loadAdminDashboard() {
+      if (!auth.protectPage("ADMIN")) return;
+
+      try {
+        const d = await admin.getDashboard();
+        if (!d) return;
+
+        document.getElementById("adm-total-users").textContent = d.totalUsers;
+        document.getElementById("adm-total-sellers").textContent = d.totalSellers;
+        if (d.pendingSellers > 0) {
+          document.getElementById("adm-pending-sellers").textContent = `(${d.pendingSellers} Pending Approval)`;
+        }
+        document.getElementById("adm-total-products").textContent = d.totalProducts;
+        document.getElementById("adm-total-revenue").textContent = utils.formatCurrency(d.totalRevenue);
+
+        const tbody = document.getElementById("adm-recent-orders-tbody");
+        const list = d.recentOrders || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">No transactions recorded in the system yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(o => `
+          <tr>
+            <td><code>#SM-${o.id}</code></td>
+            <td><strong>${o.userName || "Customer"}</strong></td>
+            <td style="font-size: 0.85rem; color: var(--text-muted);">${utils.formatDate(o.createdAt)}</td>
+            <td>${o.items ? o.items.length : 0} items</td>
+            <td style="font-weight: 700; color: var(--accent-gold);">${utils.formatCurrency(o.totalAmount)}</td>
+            <td>
+              <span class="status-pill ${getStatusColorClass(o.status)}">
+                ${o.status}
+              </span>
+            </td>
+            <td>
+              <a href="/pages/order-details.html?id=${o.id}" class="btn btn-outline btn-sm">Inspect</a>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("Failed to load admin dashboard:", err);
+      }
+    }
+
+    function getStatusColorClass(status) {
+      switch (status) {
+        case "DELIVERED": return "success";
+        case "SHIPPED":
+        case "OUT_FOR_DELIVERY": return "cyan";
+        case "PROCESSING":
+        case "CONFIRMED": return "purple";
+        case "CANCELLED": return "danger";
+        default: return "warning";
+      }
+    }
+
+    loadAdminDashboard();
+  </script>
+</body>
+</html>

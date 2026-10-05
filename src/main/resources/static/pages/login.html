@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - StyleMirror Luxury Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h2 class="auth-title display-title">WELCOME <span class="gold-text">BACK</span></h2>
+          <p class="auth-subtitle">Sign in to your StyleMirror digital atelier</p>
+        </div>
+
+        <!-- Quick 1-Click Demo Login Bar for Evaluation -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; margin-bottom: 24px;">
+          <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; display: block; margin-bottom: 8px;">Quick Demo Fill:</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('buyer')">Buyer</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('seller')">Seller</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('admin')">Admin</button>
+          </div>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="login-email" class="form-input" placeholder="name@domain.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required />
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+            Sign In to StyleMirror
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Don't have an account yet? <a href="/pages/register.html">Create one here</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { auth } from "/js/auth.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    window.fillDemo = function(role) {
+      const emailInput = document.getElementById("login-email");
+      const passInput = document.getElementById("login-password");
+      if (role === 'admin') {
+        emailInput.value = "admin@stylemirror.com";
+        passInput.value = "Admin@123";
+      } else if (role === 'seller') {
+        emailInput.value = "seller@stylemirror.com";
+        passInput.value = "Seller@123";
+      } else {
+        emailInput.value = "buyer@stylemirror.com";
+        passInput.value = "Buyer@123";
+      }
+    };
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const pass = document.getElementById("login-password").value;
+      const btn = document.getElementById("login-submit-btn");
+
+      btn.disabled = true;
+      btn.textContent = "Authenticating...";
+
+      try {
+        const user = await auth.login(email, pass);
+        utils.showToast(`Welcome back, ${user.fullName}!`, "success");
+
+        setTimeout(() => {
+          if (auth.hasRole("ADMIN")) {
+            window.location.href = "/pages/admin/dashboard.html";
+          } else if (auth.hasRole("SELLER")) {
+            window.location.href = "/pages/seller/dashboard.html";
+          } else {
+            window.location.href = "/pages/products.html";
+          }
+        }, 800);
+      } catch (err) {
+        utils.showToast(err.message, "error");
+        btn.disabled = false;
+        btn.textContent = "Sign In to StyleMirror";
+      }
+    });
+  </script>
+</body>
+</html>

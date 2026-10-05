@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atelier Collection - StyleMirror</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/ecommerce.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="site-header-container"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="margin-bottom: 32px;">
+        <span class="product-brand">HAUTE COUTURE CATALOG</span>
+        <h1 class="display-title" style="font-size: 2.4rem;">DIGITAL <span class="gold-text">ATELIER COLLECTION</span></h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Explore precision-crafted garments enabled with real-time MediaPipe virtual try-on overlays.
+        </p>
+      </div>
+
+      <div class="catalog-layout">
+        <!-- Filter Sidebar -->
+        <aside class="filter-sidebar">
+          <div class="filter-section">
+            <h3 class="filter-title">Search Garments</h3>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="catalog-search" class="form-input" placeholder="Keyword, brand, style..." />
+              <button id="search-btn" class="btn btn-secondary btn-sm">Go</button>
+            </div>
+          </div>
+
+          <div class="filter-section">
+            <h3 class="filter-title">Categories</h3>
+            <ul id="category-filter-list" class="category-filter-list">
+              <li class="category-filter-item active" data-category-id="">All Collections</li>
+              <!-- Dynamically populated categories -->
+            </ul>
+          </div>
+
+          <div class="filter-section" style="border-bottom: none;">
+            <h3 class="filter-title">Virtual Try-On</h3>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer;">
+              <input type="checkbox" id="tryon-only-filter" />
+              <span>Show AR Try-On Only</span>
+            </label>
+          </div>
+        </aside>
+
+        <!-- Product Grid Main Area -->
+        <section>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <span id="product-count-label" style="color: var(--text-muted); font-size: 0.9rem;">Loading collection...</span>
+            <select id="sort-select" class="form-select" style="width: auto; padding: 8px 16px;">
+              <option value="featured">Sort by: Featured</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="name">Garment Name</option>
+            </select>
+          </div>
+
+          <div id="catalog-grid" class="product-grid">
+            <div class="loading-spinner"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div id="site-footer-container"></div>
+
+  <script type="module">
+    import { products } from "/js/products.js";
+    import { utils } from "/js/utils.js";
+    import "/js/app.js";
+
+    let allProducts = [];
+    let currentCategoryId = utils.getQueryParam("categoryId") || "";
+    let currentSearch = "";
+
+    async function initCatalog() {
+      await loadCategories();
+      await fetchAndRenderProducts();
+      setupEvents();
+    }
+
+    async function loadCategories() {
+      const catListEl = document.getElementById("category-filter-list");
+      try {
+        const cats = await products.getCategories();
+        cats.forEach(c => {
+          const li = document.createElement("li");
+          li.className = `category-filter-item ${currentCategoryId == c.id ? "active" : ""}`;
+          li.dataset.categoryId = c.id;
+          li.textContent = c.name;
+          li.onclick = () => selectCategory(c.id);
+          catListEl.appendChild(li);
+        });
+      } catch (err) {
+        console.error("Categories error:", err);
+      }
+    }
+
+    function selectCategory(catId) {
+      currentCategoryId = catId;
+      document.querySelectorAll(".category-filter-item").forEach(item => {
+        item.classList.toggle("active", item.dataset.categoryId == catId);
+      });
+      fetchAndRenderProducts();
+    }
+
+    async function fetchAndRenderProducts() {
+      const grid = document.getElementById("catalog-grid");
+      const countLabel = document.getElementById("product-count-label");
+      grid.innerHTML = `<div class="loading-spinner"></div>`;
+
+      try {
+        allProducts = await products.getProducts(currentCategoryId || null, currentSearch || null);
+        applyFiltersAndSort();
+      } catch (err) {
+        grid.innerHTML = `<div class="empty-state">Failed to load catalog: ${err.message}</div>`;
+        countLabel.textContent = "0 garments available";
+      }
+    }
+
+    function applyFiltersAndSort() {
+      const grid = document.getElementById("catalog-grid");
+      const countLabel = document.getElementById("product-count-label");
+      const tryonOnly = document.getElementById("tryon-only-filter").checked;
+      const sortVal = document.getElementById("sort-select").value;
+
+      let list = [...allProducts];
+
+      if (tryonOnly) {
+        list = list.filter(p => p.tryOnAsset && p.tryOnAsset.enabled);
+      }
+
+      if (sortVal === "price-asc") {
+        list.sort((a, b) => a.basePrice - b.basePrice);
+      } else if (sortVal === "price-desc") {
+        list.sort((a, b) => b.basePrice - a.basePrice);
+      } else if (sortVal === "name") {
+        list.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      countLabel.textContent = `Showing ${list.length} garment${list.length === 1 ? "" : "s"}`;
+
+      if (list.length > 0) {
+        grid.innerHTML = list.map(p => products.renderProductCard(p)).join("");
+      } else {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">👗</div>
+            <h3>No garments match your filters</h3>
+            <p>Try clearing your search query or exploring a different collection category.</p>
+          </div>
+        `;
+      }
+    }
+
+    function setupEvents() {
+      document.getElementById("category-filter-list").children[0].onclick = () => selectCategory("");
+      document.getElementById("search-btn").onclick = () => {
+        currentSearch = document.getElementById("catalog-search").value.trim();
+        fetchAndRenderProducts();
+      };
+      document.getElementById("catalog-search").addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          currentSearch = e.target.value.trim();
+          fetchAndRenderProducts();
+        }
+      });
+      document.getElementById("tryon-only-filter").onchange = applyFiltersAndSort;
+      document.getElementById("sort-select").onchange = applyFiltersAndSort;
+    }
+
+    initCatalog();
+  </script>
+</body>
+</html>
