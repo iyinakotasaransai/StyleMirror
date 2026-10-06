@@ -18,7 +18,7 @@
     <description>StyleMirror - AI-Powered Fashion E-Commerce and Virtual Try-On Management Portal</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
         <jjwt.version>0.12.5</jjwt.version>
     </properties>
 

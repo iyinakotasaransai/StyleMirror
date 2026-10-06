@@ -1,7 +1,7 @@
 # StyleMirror – AI-Powered Fashion E-Commerce & Virtual Try-On Management Portal
 
 > **A Production-Grade, Full-Stack B.Tech Final-Year Capstone Project**  
-> Built with **Spring Boot 3.2.5 (Java 17)**, **MySQL 8.x**, **Vanilla JavaScript (ES6+)**, **MediaPipe Pose**, **Three.js (r128)**, and **Google Gemini 2.5 Flash**.
+> Built with **Spring Boot 3.5.16 (Java 25)**, **MySQL 8.x**, **Vanilla JavaScript (ES6+)**, **MediaPipe Pose**, **Three.js (r128)**, and **Google Gemini 2.5 Flash**.
 
 ---
 
@@ -49,8 +49,8 @@
 
 | Component | Technology | Version | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Backend Framework** | Spring Boot | 3.2.5 | Enterprise REST API and application container |
-| **Language** | Java (JDK) | 17+ | Core server-side implementation |
+| **Backend Framework** | Spring Boot | 3.5.16 | Enterprise REST API and application container |
+| **Language** | Java (JDK) | 25 | Core server-side implementation |
 | **Security** | Spring Security + JJWT | 0.12.5 | Stateless JWT authentication and role authorization |
 | **Password Hashing** | BCrypt (Cost Factor 10) | Standard | Cryptographic one-way password storage |
 | **Persistence** | Spring Data JPA / Hibernate | 6.x | Object-Relational Mapping (ORM) and transactions |
